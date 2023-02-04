@@ -7,8 +7,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # For webcam input:
-path = r'C:/Users/gmari/Documents/Repos/Capstone/Testing/Video Test/wrist_angle_sample.mp4'
-cap = cv2.VideoCapture(path)
+cap = cv2.VideoCapture('C:/Users/gmari/Documents/Repos/Capstone/Testing/Video Test/wrist_angle_sample.mp4')
 
 with mp_hands.Hands(
     model_complexity=0,
@@ -54,11 +53,11 @@ with mp_hands.Hands(
       theta = sum(buffer) / len(buffer)
 
     image = cv2.flip(image, 1)
-    cv2.putText(image, str(int(theta)), (100,100), cv2.FONT_HERSHEY_PLAIN, 1, (0,0,0), 2, cv2.LINE_AA)
+    cv2.putText(image, str(int(theta)), (100,100), cv2.FONT_HERSHEY_PLAIN, 5, (0,0,0), 2, cv2.LINE_AA)
+    desired_width, desired_height = get_window_size(cap.get(3), cap.get(4))
+    frame = cv2.resize(image, (desired_width, desired_height))
+    cv2.imshow('Media Pipe', frame)
     if cv2.waitKey(5) & 0xFF == ord('q'):
       break
 
 cap.release()
-
-# Closes all the frames
-cv2.destroyAllWindows()
