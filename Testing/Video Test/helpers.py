@@ -1,4 +1,3 @@
-import cv2
 import math
 import numpy as np
 import mediapipe as mp
@@ -19,40 +18,51 @@ ring_tip = mp_hands.HandLandmark.RING_FINGER_TIP
 ring_pip = mp_hands.HandLandmark.RING_FINGER_PIP
 ring_mcp = mp_hands.HandLandmark.RING_FINGER_MCP    
 
+# Middle finger landmarks
+middle_tip = mp_hands.HandLandmark.MIDDLE_FINGER_TIP
+middle_pip = mp_hands.HandLandmark.MIDDLE_FINGER_PIP
+middle_mcp = mp_hands.HandLandmark.MIDDLE_FINGER_MCP
+
+# Pinky finger landmarks
+pinky_tip = mp_hands.HandLandmark.PINKY_TIP
+pinky_pip = mp_hands.HandLandmark.PINKY_PIP
+pinky_mcp = mp_hands.HandLandmark.PINKY_MCP
+
+# Thumb landmarks
+thumb_tip = mp_hands.HandLandmark.THUMB_TIP
+thumb_ip = mp_hands.HandLandmark.THUMB_IP
+thumb_mcp = mp_hands.HandLandmark.THUMB_MCP
+thumb_cmc = mp_hands.HandLandmark.THUMB_CMC
+
 def landmark_dict(hand_landmarks):
-    landmarks = {
-                "index": {
-                            "tip": [hand_landmarks.landmark[index_tip].x,
-                                    hand_landmarks.landmark[index_tip].y,
-                                    hand_landmarks.landmark[index_tip].z],
-                            "pip": [hand_landmarks.landmark[index_pip].x,
-                                    hand_landmarks.landmark[index_pip].y,
-                                    hand_landmarks.landmark[index_pip].z],
-                            "mcp": [hand_landmarks.landmark[index_mcp].x,
-                                    hand_landmarks.landmark[index_mcp].y,
-                                    hand_landmarks.landmark[index_mcp].z]},
-                "wrist":            [hand_landmarks.landmark[wrist].x,
-                                    hand_landmarks.landmark[wrist].y,
-                                    hand_landmarks.landmark[wrist].z],
-                "ring": {
-                            "tip": [hand_landmarks.landmark[ring_tip].x,
-                                    hand_landmarks.landmark[ring_tip].y,
-                                    hand_landmarks.landmark[ring_tip].z],
-                            "pip": [hand_landmarks.landmark[ring_pip].x,
-                                    hand_landmarks.landmark[ring_pip].y,
-                                    hand_landmarks.landmark[ring_pip].z],
-                            "mcp": [hand_landmarks.landmark[ring_mcp].x,
-                                    hand_landmarks.landmark[ring_mcp].y,
-                                    hand_landmarks.landmark[ring_mcp].z]}}
-    return landmarks
+	landmarks = {
+				"thumb": {
+					"tip": [thumb_tip], "ip": [thumb_ip], "mcp": [thumb_mcp], "cmc": [thumb_cmc]},
+				"index": {
+					"tip": [index_tip], "pip": [index_pip], "mcp": [index_mcp]},
+				"middle": {
+					"tip": [middle_tip], "pip": [middle_pip], "mcp": [middle_mcp]},
+				"ring": {
+					"tip": [ring_tip], "pip": [ring_pip], "mcp": [ring_mcp]},
+				"pinky": {
+					"tip": [pinky_tip], "pip": [pinky_pip], "mcp": [pinky_mcp]},
+				"wrist": {
+					"wrist": [wrist]}
+				}
+
+	for item in landmarks:
+		for sub_item in landmarks[item]:
+			landmarks[item][sub_item].append(hand_landmarks.landmark[landmarks[item][sub_item][0]].x)
+			landmarks[item][sub_item].append(hand_landmarks.landmark[landmarks[item][sub_item][0]].y)
+			landmarks[item][sub_item].append(hand_landmarks.landmark[landmarks[item][sub_item][0]].z)
+			landmarks[item][sub_item].pop(0)
+	
+	return landmarks
 
 def ring_pip_theta(landmarks):
     # Generate vectors of pip -> mcp and pip -> tip to find pip angle
     pip_mcp = np.subtract(landmarks["ring"]["pip"], landmarks["ring"]["mcp"])
     pip_tip = np.subtract(landmarks["ring"]["pip"], landmarks["ring"]["tip"])
-
-    pip_mcp = np.multiply(200,pip_mcp)
-    pip_tip = np.multiply(200,pip_tip)
 
     # Compute angle between them
     dot_prod = np.dot(pip_mcp, pip_tip)
