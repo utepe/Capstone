@@ -59,17 +59,39 @@ def landmark_dict(hand_landmarks):
 	
 	return landmarks
 
-def ring_pip_theta(landmarks):
+def mcp_theta(landmarks, finger):
+	# Generate vectors of mcp -> wrist and mcp -> pip to find mcp angle
+
+	if finger == "thumb":
+		mcp_pip = np.subtract(landmarks[finger]["mcp"], landmarks[finger]["ip"])
+	else:
+		mcp_pip = np.subtract(landmarks[finger]["mcp"], landmarks[finger]["pip"])
+
+	mcp_wrist = np.subtract(landmarks[finger]["mcp"], landmarks["wrist"]["wrist"])
+
+	# Compute angle between them
+	dot_prod = np.dot(mcp_wrist, mcp_pip)
+	mag_prod = np.linalg.norm(mcp_wrist)*np.linalg.norm(mcp_pip)
+	theta = math.acos(dot_prod / mag_prod) * 180 / (math.pi)
+
+	return(theta)
+
+def pip_theta(landmarks, finger):
     # Generate vectors of pip -> mcp and pip -> tip to find pip angle
-    pip_mcp = np.subtract(landmarks["ring"]["pip"], landmarks["ring"]["mcp"])
-    pip_tip = np.subtract(landmarks["ring"]["pip"], landmarks["ring"]["tip"])
+
+	if finger == "thumb":
+		pip_tip = np.subtract(landmarks[finger]["ip"], landmarks[finger]["tip"])
+		pip_mcp = np.subtract(landmarks[finger]["ip"], landmarks[finger]["mcp"])
+	else:
+		pip_tip = np.subtract(landmarks[finger]["pip"], landmarks[finger]["tip"])
+		pip_mcp = np.subtract(landmarks[finger]["pip"], landmarks[finger]["mcp"])
 
     # Compute angle between them
-    dot_prod = np.dot(pip_mcp, pip_tip)
-    mag_prod = np.linalg.norm(pip_mcp)*np.linalg.norm(pip_tip)
-    theta = math.acos(dot_prod / mag_prod) * 180 / (math.pi)
+	dot_prod = np.dot(pip_mcp, pip_tip)
+	mag_prod = np.linalg.norm(pip_mcp)*np.linalg.norm(pip_tip)
+	theta = math.acos(dot_prod / mag_prod) * 180 / (math.pi)
 
-    return(theta)
+	return(theta)
 
 def get_window_size(width, height):
 	# get the frame width and height
