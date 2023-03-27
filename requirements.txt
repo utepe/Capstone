@@ -6,7 +6,6 @@ flatbuffers==23.1.21
 fonttools==4.38.0
 kiwisolver==1.4.4
 matplotlib==3.6.3
-mediapipe==0.9.1.0
 numpy==1.24.2
 opencv-contrib-python==4.7.0.68
 opencv-python==4.7.0.68

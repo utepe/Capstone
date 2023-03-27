@@ -12,7 +12,7 @@ time.sleep(1)
 duty=2 # 0 degrees
 servo.ChangeDutyCycle(duty)
 
-try:
+'''try:
   while True:
     angle = input("Enter angle: ")
     if angle == 'q':
@@ -27,4 +27,19 @@ try:
     servo.ChangeDutyCycle(dutyCycle)
 except KeyboardInterrupt:
   servo.stop()
-  GPIO.cleanup()
+  GPIO.cleanup()'''
+
+for i in range(0,180):
+  angle = float(i)
+  dutyCycle = (angle/22.5)+2
+  servo.ChangeDutyCycle(dutyCycle)
+
+time.sleep(2)
+
+for i in range(0,180):
+  angle = float(180-i)
+  dutyCycle = (angle/22.5)+2
+  servo.ChangeDutyCycle(dutyCycle)
+  
+servo.stop()
+GPIO.cleanup()
