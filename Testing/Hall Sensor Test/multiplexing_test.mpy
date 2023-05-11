@@ -1,0 +1,11 @@
+from machine import Pin, ADC
+from time import sleep
+
+select_pin_nums_mux_1 = [22, 21, 20]    # S0~GP22, S1~GP21, S2~GP20
+select_pin_nums_mux_2 = [19, 18, 17]    # S0~GP19, S1~GP18, S2~GP17
+
+select_pins_mux_1 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_1]
+z_mux_1 = ADC(Pin(27))    # Z1~GP27
+
+select_pins_mux_2 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_2]
+z_mux_2 = ADC(Pin(26))    # Z2~GP27
