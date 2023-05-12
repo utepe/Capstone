@@ -1,5 +1,6 @@
 from machine import Pin, ADC
 from time import sleep
+from helpers import calculate_SMA 
 
 fingers = {"pinky", "ring", "middle", "index", "thumb"}
 
@@ -12,9 +13,10 @@ z_mux_1 = ADC(Pin(27))    # Z1~GP27
 select_pins_mux_2 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_2]
 z_mux_2 = ADC(Pin(26))    # Z2~GP27
 
+# select pin should range bewteen 0 and 4
 def select_pin(p, pins): 
     for i in range(3): 
-        pins[i].value((p>>i)&1) 
+        pins[i].value((p >> i) & 1) 
 
 def read_sensors(): 
     # first mux will track mcp joints, second mux will track pip joints
@@ -24,7 +26,22 @@ def read_sensors():
     for i, key in enumerate(fingers): 
         select_pin(i, select_pins_mux_1) 
         select_pin(i, select_pins_mux_2) 
-        mcp_joints[key].append(z_mux_1.read_u16())
-        pip_joints[key].append(z_mux_2.read_u16())
+
+        mcp_value = z_mux_1.read_u16()
+        pip_value = z_mux_2.read_u16()
+
+        # Calculate the simple moving average for each joint
+        mcp_avg = calculate_SMA(mcp_joints[key], mcp_value)
+        pip_avg = calculate_SMA(pip_joints[key], pip_value)
+
+        # Append the average to the list of averages for each joint 
+        mcp_joints[key].append(mcp_avg)
+        pip_joints[key].append(pip_avg)
 
     return mcp_joints, pip_joints 
+
+while True:
+    mcp_joints, pip_joints = read_sensors()
+    print(mcp_joints)
+    print(pip_joints)
+    sleep(0.1)
