@@ -101,7 +101,7 @@ def read_sensors():
     return mcp_joints, pip_joints 
 
 def read_sensors_rev(): 
-    sleep(0.1)
+    #sleep(0.1)
     i=0
     while i < len(fingers):
     #for i, key in enumerate(fingers):
@@ -129,5 +129,5 @@ def read_sensors_rev():
 while True:
     # mcp_joints_, pip_joints = 
     read_sensors_rev()
-    print(mcp_joints_rev["current_avg"])
+    print(mcp_joints_rev["current_avg"],end='\r')
     #print(pip_joints,end='\r')

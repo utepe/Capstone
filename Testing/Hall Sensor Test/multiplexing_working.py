@@ -38,49 +38,13 @@ z_mux_1 = ADC(Pin(27))    # Z1~GP27
 select_pins_mux_2 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_2]
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
-'''
+
 # select pin should range bewteen 0 and 4
 def select_pin(p, pins): 
     for i in range(3): 
         pins[i].value((p >> i) & 1)
-'''
-
-'''
-def select_pin(pin, select_pins):
-    if pin > 5:
-        return
-    
-    for i in range(3):
-        if pin & ( 1 << i ):
-            select_pins[i].high()
-        else:
-            select_pins[i].low()
-'''
-
-def select_pin(pin, select_pins):
-    if pin == 0:
-        select_pins[0].value(0)
-        select_pins[1].value(0)
-        select_pins[2].value(0)
-    elif pin == 1:
-        select_pins[0].value(1)
-        select_pins[1].value(0)
-        select_pins[2].value(0)
-    elif pin == 2:
-        select_pins[0].value(0)
-        select_pins[1].value(1)
-        select_pins[2].value(0)
-    elif pin == 3:
-        select_pins[0].value(1)
-        select_pins[1].value(1)
-        select_pins[2].value(0)
-    elif pin == 4:
-        select_pins[0].value(0)
-        select_pins[1].value(0)
-        select_pins[2].value(1)    
 
 def read_sensors(): 
-    sleep(0.1)
     i=0
     while i < len(fingers):
         select_pin(i, select_pins_mux_1) 
@@ -99,5 +63,5 @@ def read_sensors():
 while True:
     # mcp_joints_, pip_joints = 
     read_sensors()
-    print(mcp_joints["current_avg"])
+    print(mcp_joints["current_avg"],end='\r')
     #print(pip_joints,end='\r')
