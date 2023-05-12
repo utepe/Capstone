@@ -11,7 +11,7 @@ select_pins_mux_1 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_1]
 z_mux_1 = ADC(Pin(27))    # Z1~GP27
 
 select_pins_mux_2 = [Pin(i, Pin.OUT) for i in select_pin_nums_mux_2]
-z_mux_2 = ADC(Pin(26))    # Z2~GP27
+z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 # select pin should range bewteen 0 and 4
 def select_pin(p, pins): 
