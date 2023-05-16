@@ -6,12 +6,17 @@ flatbuffers==23.1.21
 fonttools==4.38.0
 kiwisolver==1.4.4
 matplotlib==3.6.3
+mediapipe==0.9.1.0
 numpy==1.24.2
 opencv-contrib-python==4.7.0.68
 opencv-python==4.7.0.68
 packaging==23.0
+pandas==2.0.1
 Pillow==9.4.0
 protobuf==3.20.3
 pyparsing==3.0.9
 python-dateutil==2.8.2
+pytz==2023.3
+scipy==1.10.1
 six==1.16.0
+tzdata==2023.3
