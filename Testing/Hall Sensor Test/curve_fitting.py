@@ -16,11 +16,9 @@ popt, _ = curve_fit(func, x, y)
 a, b, c, d = popt
 print(f"y = {a:0.3f} * x**3 + {b:0.3f} * x**2 + {c:0.3f} * x + {d:0.3f}")
 
-
 plt.plot(x, y, 'o', label='raw data')
 
 x_line = np.arange(min(x), max(x), 0.01)
-print(x_line)
 y_line = func(x_line, a, b, c, d)
 
 plt.plot(x_line, y_line, label="curve")
