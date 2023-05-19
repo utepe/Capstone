@@ -1,60 +1,34 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO.Ports;
+using UnityEngine;
 
-public class HandController : MonoBehaviour {
-
-    public float fingerRotationSpeed = 1f;
-
+public class HandController : MonoBehaviour
+{
     SerialPort stream = new SerialPort("/dev/ttyACM0", 9600);
+    public float sensitvity = 0.01f;
 
-    // Finger joint game objects
-    public Transform thumbJoint;
-    public Transform indexJoint;
-    public Transform middleJoint;
-    public Transform ringJoint;
-    public Transform pinkyJoint;
+    // b_l_index1 -> index_mcp, b_l_index2 -> index_pip, b_l_index3 -> index_dip
+    public Transform b_l_index1, b_l_index2, b_l_index3;
 
-    // Sensor values
-    float thumbValue;
-    float indexValue;
-    float middleValue;
-    float ringValue;
-    float pinkyValue;
-
-    // Use this for initialization
-    void Start () {
+    // Start is called before the first frame update
+    void Start()
+    {
         stream.Open();
     }
 
     // Update is called once per frame
-    void Update () {
-        // Read sensor values from the serial port
-        string line = stream.ReadLine();
-        string[] values = line.Split(',');
-        thumbValue = float.Parse(values[0]);
-        indexValue = float.Parse(values[1]);
-        middleValue = float.Parse(values[2]);
-        ringValue = float.Parse(values[3]);
-        pinkyValue = float.Parse(values[4]);
+    void Update()
+    {
+        string inputString = stream.ReadLine();
+        string[] angles = inputString.Split(',');
 
-        // Map sensor values to joint angles
-        float thumbAngle = thumbValue * 90f;
-        float indexAngle = indexValue * 90f;
-        float middleAngle = middleValue * 90f;
-        float ringAngle = ringValue * 90f;
-        float pinkyAngle = pinkyValue * 90f;
+        float index_mcp_angle = float.Parse(angles[0]);
+        float index_pip_angle = float.Parse(angles[1]);
+        float index_dip_angle = float.Parse(angles[1]);
 
-        // Update joint rotations
-        thumbJoint.localEulerAngles = new Vector3(thumbAngle, 0f, 0f);
-        indexJoint.localEulerAngles = new Vector3(indexAngle, 0f, 0f);
-        middleJoint.localEulerAngles = new Vector3(middleAngle, 0f, 0f);
-        ringJoint.localEulerAngles = new Vector3(ringAngle, 0f, 0f);
-        pinkyJoint.localEulerAngles = new Vector3(pinkyAngle, 0f, 0f);
-    }
-
-    void OnApplicationQuit() {
-        stream.Close();
+        b_l_index1.transform.localEulerAngles = new Vector3(0, 0, -index_mcp_angle);
+        b_l_index2.transform.localEulerAngles = new Vector3(0, 0, -index_pip_angle);
+        b_l_index3.transform.localEulerAngles = new Vector3(0, 0, -index_dip_angle);
     }
 }
