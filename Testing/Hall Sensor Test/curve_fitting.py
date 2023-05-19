@@ -42,15 +42,28 @@ during user calibration we will take these bounded and normalized values again t
 # plt.plot(x_bounded, y_bounded, label="bounded curve")
 
 # user test -> using func_user method to plot the scaled curve based on the bounded region
-x_bounded = np.arange(0.6, 0.7, 0.001)
-y_bounded = func_user(x_bounded, *popt)
-popt, _ = curve_fit(func_glove, x_bounded, y_bounded)
-e, f, g, h = popt
-print(f"y = {e:0.3f} * x**3 + {f:0.3f} * x**2 + {g:0.3f} * x + {h:0.3f}")
-plt.plot(x_bounded, y_bounded, label="bounded curve")
+# x_bounded = np.arange(0.6, 0.7, 0.001)
+# y_bounded = func_user(x_bounded, *popt)
+# popt, _ = curve_fit(func_glove, x_bounded, y_bounded)
+# e, f, g, h = popt
+# print(f"y = {e:0.3f} * x**3 + {f:0.3f} * x**2 + {g:0.3f} * x + {h:0.3f}")
+# plt.plot(x_bounded, y_bounded, label="bounded curve")
 
-plt.plot(x, y, 'o', label='raw data')
-plt.plot(x_line, y_line, label="curve")
-plt.legend()
+# plt.plot(x, y, 'o', label='raw data')
+# plt.plot(x_line, y_line, label="curve")
+# plt.legend()
 
-plt.show()
+# plt.show()
+
+ # Open the file in write mode
+file = open("Testing\Hall Sensor Test\Sample_Data\sampleAngles.txt", "w")
+start = 0.41
+end = 0.71
+step = 0.01
+
+for i in range(int(start * 100), int(end * 100) + 1, int(step * 100)):
+    # Write text to the file
+    file.write(f"{func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}\n")
+
+# Close the file
+file.close()
