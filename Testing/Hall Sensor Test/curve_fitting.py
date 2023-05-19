@@ -13,7 +13,7 @@ def func_glove(x, a, b, c, d):
 
 def func_user(x, a, b, c, d):
     offset = func_glove(min(x), a, b, c, d)
-    scale = 180/(func_glove(max(x), a, b, c, d) - offset)
+    scale = 90/(func_glove(max(x), a, b, c, d) - offset)
     return scale*(func_glove(x, a, b, c, d) - offset)
 
 # load dataset
@@ -23,7 +23,7 @@ data = pd.read_csv('Testing\Hall Sensor Test\Sample_Data\Hall_Sensor_Data_Revers
 '''data will be an averaged value from around 100 samples from the sensor for each angle'''
 x = data['value']
 # x = normalize(data['value'])
-y = data['angle']
+y = data['angle']/2
 
 # curve fit, popt contains the coefficients of the polynomial
 popt, _ = curve_fit(func_glove, x, y)
