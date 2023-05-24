@@ -8,13 +8,21 @@ def normalize(data):
     return (data - min(data)) / (max(data) - min(data))
 
 # define the true objective function (3rd degree polynomial)
-def func_glove(x, a, b, c, d):
+def poly_func(x, a, b, c, d):
     return a * x**3 + b * x**2 + c * x + d
+
+def func_glove(x, a, b, c, d, scale=1, offset=0):
+    return scale*(a * x**3 + b * x**2 + c * x + d - offset)
 
 def func_user(x, a, b, c, d):
     offset = func_glove(min(x), a, b, c, d)
     scale = 90/(func_glove(max(x), a, b, c, d) - offset)
     return scale*(func_glove(x, a, b, c, d) - offset)
+
+def user_calibration(x, a, b, c, d):
+    offset = func_glove(min(x), a, b, c, d)
+    scale = 90/(func_glove(max(x), a, b, c, d) - offset)
+    return scale, offset
 
 # load dataset
 headers = ['value', 'angle']
@@ -26,7 +34,7 @@ x = data['value']
 y = data['angle']/2
 
 # curve fit, popt contains the coefficients of the polynomial
-popt, _ = curve_fit(func_glove, x, y)
+popt, _ = curve_fit(poly_func, x, y)
 a, b, c, d = popt
 print(f"y = {a:0.3f} * x**3 + {b:0.3f} * x**2 + {c:0.3f} * x + {d:0.3f}")
 
@@ -42,28 +50,29 @@ during user calibration we will take these bounded and normalized values again t
 # plt.plot(x_bounded, y_bounded, label="bounded curve")
 
 # user test -> using func_user method to plot the scaled curve based on the bounded region
-# x_bounded = np.arange(0.6, 0.7, 0.001)
-# y_bounded = func_user(x_bounded, *popt)
-# popt, _ = curve_fit(func_glove, x_bounded, y_bounded)
-# e, f, g, h = popt
-# print(f"y = {e:0.3f} * x**3 + {f:0.3f} * x**2 + {g:0.3f} * x + {h:0.3f}")
-# plt.plot(x_bounded, y_bounded, label="bounded curve")
+x_bounded = np.arange(0.6, 0.7, 0.001)
+scale, offset = user_calibration(x_bounded, *popt)
+y_bounded = func_glove(x_bounded, *popt, scale, offset)
+popt, _ = curve_fit(poly_func, x_bounded, y_bounded)
+e, f, g, h = popt
+print(f"y = {e:0.3f} * x**3 + {f:0.3f} * x**2 + {g:0.3f} * x + {h:0.3f}")
+plt.plot(x_bounded, y_bounded, label="bounded curve")
 
-# plt.plot(x, y, 'o', label='raw data')
-# plt.plot(x_line, y_line, label="curve")
-# plt.legend()
+plt.plot(x, y, 'o', label='raw data')
+plt.plot(x_line, y_line, label="curve")
+plt.legend()
 
-# plt.show()
+plt.show()
 
- # Open the file in write mode
-file = open("Testing\Hall Sensor Test\Sample_Data\sampleAngles.txt", "w")
-start = 0.41
-end = 0.71
-step = 0.01
+# Open the file in write mode
+# file = open("Testing\Hall Sensor Test\Sample_Data\sampleAnglesAll.txt", "w")
+# start = 0.41
+# end = 0.71
+# step = 0.01
 
-for i in range(int(start * 100), int(end * 100) + 1, int(step * 100)):
-    # Write text to the file
-    file.write(f"{func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}\n")
+# for i in range(int(start * 100), int(end * 100) + 1, int(step * 100)):
+#     # Write text to the file
+#     file.write(f"{func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}, {func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}, {func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}, {func_glove(i/100, *popt)/2}, {func_glove(i/100, *popt)}\n")
 
-# Close the file
-file.close()
+# # Close the file
+# file.close()
