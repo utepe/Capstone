@@ -3,8 +3,11 @@ NOTE: func_glove method is just the name of the 3rd degreee poly method, it will
 def func_glove(x, a, b, c, d):
     return a * x**3 + b * x**2 + c * x + d
 '''
+
 '''
-Note: micopython does have scipy so alter the func_glove to have default values 
+NOTE: micopython does have scipy 
+meaning glove calibration will be done using computer? 
+so alter the func_glove to have default values, test by comparing output of this to curve fit values 
 def func_glove(x, a, b, c, d, offset=0, scale=1):
     return scale*(a * x**3 + b * x**2 + c * x + d - offset)
 '''
