@@ -1,0 +1,20 @@
+When mode is switched to CALIBRATION
+
+    1. Wait 5 seconds
+    2. Prompt "OPEN" using LED (take timestamp)
+    3. Wait 2 seconds
+    4. Prompt "CLOSE" using LED (take timestamp)
+    5. Wait 2 seconds
+    6. Repeat 5x
+
+Data from this time period stored into a structure with columns:
+
+time | command | MCP (mV) | PIP (mV)
+
+During an interval in which hand is "OPEN" or "CLOSED", take min/max according to glove description file. 
+
+Curve Fitting can be done linearly or 3rd-order on each PIP and MCP joint
+
+Linear: average "OPEN" value and average "CLOSED" value and fit with y = mx + b
+
+MODE switches back to UNITY
