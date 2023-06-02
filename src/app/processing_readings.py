@@ -58,23 +58,3 @@ def read_sensors():
 # define the true objective linear function
 def linear_func(x, a, b):
     return a * x + b
-
-# Configure the UART (serial port)
-uart = machine.UART(0, baudrate=9600)
-
-# Function to send data via serial port
-def send_serial_data(data):
-    uart.write(data)
-
-with open('relationships.json') as f:
-    file_data = f.read()
-relationships = json.loads(file_data)
-f.close()
-
-while True:
-    read_sensors()
-    index_mcp_reading = linear_func(mcp_joints["current_avg"]["index"], *relationships["index_mcp"])
-    index_pip_reading = linear_func(pip_joints["current_avg"]["index"], *relationships["index_pip"])
-    data_to_send = str(index_mcp_reading) + ", " + str(index_pip_reading) + "\n"
-    print(data_to_send)
-    sleep(0.1)
