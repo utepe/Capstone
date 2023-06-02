@@ -1,5 +1,5 @@
 import json
-from machine import Pin
+from machine import Pin, time_ms
 from enum import Enum
 from time import sleep
 from app import processing_readings as processing
@@ -23,11 +23,29 @@ class mode(Enum):
 currentMode = mode.IDLE
 buttonPin = Pin(XX, Pin.IN, Pin.PULL_UP)
 
-def callback(pin):
-    global currentMode
-    currentMode = mode.IDLE
+# handlers for long and short presses for mode selection
+def up(pin):
+    global firstPress, currentMode
+    buttonPin.irq(trigger=Pin.IRQ_FALLING, handler=lambda pin: down(pin))
+    firstPress = time_ms()
+ 
+def down(pin):
+    global firstPress, currentMode
+    secondPress = time_ms()
+    buttonPin.irq(trigger=Pin.IRQ_RISING, handler=lambda pin: up(pin))
+    if (secondPress - firstPress) >= 3000:
+        firstPress = secondPress
+        print("Long press")
+        currentMode = mode.CALIBRATION
+    else:
+        print("Short press")
+        if currentMode is mode.UNITY:
+            currentMode = mode.WBA
+        else:
+            currentMode = mode.UNITY
 
-buttonPin.irq(trigger=Pin.IQR_FALLING, handler=callback)    
+buttonPin.irq(trigger=Pin.IRQ_RISING, handler=lambda pin: up(pin))
+
 
 with open('relationships.json') as f:
     file_data = f.read()
@@ -37,7 +55,9 @@ f.close()
 while True:
     if currentMode is mode.CALIBRATION:
         print(mode.CALIBRATION)
-        # do something
+        # run calibration script
+        # switch mode to UNITY
+        currentMode = mode.UNITY
     elif currentMode is mode.UNITY:
         processing.read_sensors()
         index_mcp_reading = processing.linear_func(mcp_joints["current_avg"]["index"], *relationships["index_mcp"])
