@@ -2,7 +2,8 @@ import json
 from machine import Pin, time_ms
 from enum import Enum
 from time import sleep
-from app import processing_readings as processing
+from app import processing_readings as processing, unity_mode
+
 
 mcp_joints = processing.mcp_joints
 pip_joints = processing.pip_joints
@@ -21,20 +22,21 @@ class mode(Enum):
     WBA = 3
 
 currentMode = mode.IDLE
-buttonPin = Pin(XX, Pin.IN, Pin.PULL_UP)
+
+buttonPin = Pin(18, Pin.IN, Pin.PULL_UP)
 
 # handlers for long and short presses for mode selection
 def up(pin):
-    global firstPress, currentMode
+    global first, currentMode
     buttonPin.irq(trigger=Pin.IRQ_FALLING, handler=lambda pin: down(pin))
-    firstPress = time_ms()
+    first = time_ms()
  
 def down(pin):
-    global firstPress, currentMode
-    secondPress = time_ms()
+    global first, currentMode
+    second = time_ms()
     buttonPin.irq(trigger=Pin.IRQ_RISING, handler=lambda pin: up(pin))
-    if (secondPress - firstPress) >= 3000:
-        firstPress = secondPress
+    if (second - first) >= 3000:
+        first = second
         print("Long press")
         currentMode = mode.CALIBRATION
     else:
@@ -45,7 +47,6 @@ def down(pin):
             currentMode = mode.UNITY
 
 buttonPin.irq(trigger=Pin.IRQ_RISING, handler=lambda pin: up(pin))
-
 
 with open('relationships.json') as f:
     file_data = f.read()
@@ -59,12 +60,14 @@ while True:
         # switch mode to UNITY
         currentMode = mode.UNITY
     elif currentMode is mode.UNITY:
+        # unity_mode.sendData(mcp_joints, pip_joints, relationships)
         processing.read_sensors()
         index_mcp_reading = processing.linear_func(mcp_joints["current_avg"]["index"], *relationships["index_mcp"])
         index_pip_reading = processing.linear_func(pip_joints["current_avg"]["index"], *relationships["index_pip"])
         data_to_send = str(index_mcp_reading) + ", " + str(index_pip_reading) + "\n"
         print(data_to_send)
     elif currentMode is mode.WBA:
+        # run WBA motor controller script
         print(mode.WBA)
     else:
         print(mode.IDLE)
