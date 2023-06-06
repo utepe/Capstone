@@ -3,6 +3,8 @@ from machine import Pin, ADC
 from time import sleep
 from utime import time_ns
 
+
+
 # Calculate the simple moving average for each joint
 def calculate_SMA_MCP(key, window_size=10):
     global mcp_joints
@@ -20,6 +22,7 @@ def calculate_SMA_PIP(key, window_size=10):
 
 fingers = ("thumb", "index", "middle", "ring", "pinky")
 
+# TODO: move all common variables to config.py to have them as shared global variables
 # first mux will track mcp joints, second mux will track pip joints
 mcp_joints = { "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 } }
 pip_joints = { "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 } }
@@ -54,7 +57,3 @@ def read_sensors():
            
         if time_ns()%sampling_time < sampling_time/2:
             i+=1
-
-# define the true objective linear function
-def linear_func(x, a, b):
-    return a * x + b
