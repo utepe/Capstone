@@ -1,25 +1,7 @@
 import json
-import numpy as np
 from scipy.optimize import curve_fit
 import pandas as pd
-import matplotlib.pyplot as plt
-
-# define the true objective function (3rd degree polynomial)
-def linear_func(x, a, b):
-    return a * x + b
-
-def func_glove(x, a, b, scale=1, offset=0):
-    return scale*(a * x + b - offset)
-
-def func_user(x, a, b):
-    offset = func_glove(min(x), a, b)
-    scale = 90/(func_glove(max(x), a, b) - offset)
-    return scale*(func_glove(x, a, b) - offset)
-
-def user_calibration(x, a, b):
-    offset = func_glove(min(x), a, b)
-    scale = 90/(func_glove(max(x), a, b) - offset)
-    return scale, offset
+from helpers import *
 
 # load dataset
 headers = ['mcp', 'pip']
@@ -48,9 +30,7 @@ a, b = popt_index_pip
 with open('src/common/relationships.json') as f:
     file_data = f.read()
 relationships = json.loads(file_data)
-# relationships = { "thumb_mcp": [],"thumb_pip": [], "index_mcp": [], "index_pip": [], "middle_mcp": [], "middle_pip": [],"ring_mcp": [], "ring_pip": [], "pinky_mcp": [],"pinky_pip": [] }
 
-# print(relationships)
 relationships["index_mcp"] = list(popt_index_mcp)
 relationships["index_pip"] = list(popt_index_pip)
 
