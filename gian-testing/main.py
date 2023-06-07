@@ -98,7 +98,7 @@ class WBA_Glove:
                 i += 1
                 
         for finger in fingers:
-            [self.mcp_joints["calibration"][finger][2], self.mcp_joints["calibration"][finger][3]] = self.linear_fit(90, 0, self.mcp_joints["calibration"][finger][0],
+            [self.mcp_joints["calibration"][finger][2], self.mcp_joints["calibration"][finger][3]] = self.linear_fit(0, 90, self.mcp_joints["calibration"][finger][0],
                                                                                                                      self.mcp_joints["calibration"][finger][1])
             '''
             # Adjust MCP interference with PIP
@@ -164,5 +164,5 @@ if __name__ == "__main__":
         
     while True:
         glove.read()
-        print(glove.mcp_joints["angle"])
+        print(glove.pip_joints["angle"])
         sleep(1e-1)
