@@ -21,10 +21,12 @@ class WBA_Glove:
         # first mux will track mcp joints, second mux will track pip joints
         self.mcp_joints = {
             # [max, min, m, b]
+            "pip_adjustment": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
             "calibration": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] }, 
             "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] },
             "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
-            "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
+            "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
+            "adjustment": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
             }
         
         self.pip_joints = {
@@ -64,14 +66,14 @@ class WBA_Glove:
                 i+=1
                 
     def calibrate(self):
-        state = ["OPEN", "CLOSE"]
+        state = ["CLOSE", "OPEN"]
         
         print("PIP")
         
         # Gather data to create PIP model
         i=0
         time = time_ns()
-        while i < 5:
+        while i < 3:
             self.read()
             self.update_PIP_extrema()
             
@@ -85,15 +87,17 @@ class WBA_Glove:
                                                                         self.pip_joints["calibration"][finger][1])[0]
             self.pip_joints["calibration"][finger][3] = self.linear_fit(90, 0, self.pip_joints["calibration"][finger][0],
                                                                         self.pip_joints["calibration"][finger][1])[1]
-            self.pip_joints["raw"][finger] = []
+            
         print("PIP Calibration Complete")
         input("Press Enter to continue...")
+        self.pip_joints["raw"][finger] = []
+
         print("MCP")
         
         # Gather data to create MCP model
         i=0
         time = time_ns()
-        while i < 5:
+        while i < 3:
             self.read()
             self.update_MCP_extrema()
             
@@ -103,9 +107,9 @@ class WBA_Glove:
                 i += 1
                 
         for finger in fingers:
-            self.mcp_joints["calibration"][finger][2] = self.linear_fit(0, 90, self.mcp_joints["calibration"][finger][0],
+            self.mcp_joints["calibration"][finger][2] = self.linear_fit(90, 0, self.mcp_joints["calibration"][finger][0],
                                                                         self.mcp_joints["calibration"][finger][1])[0]
-            self.mcp_joints["calibration"][finger][3] = self.linear_fit(0, 90, self.mcp_joints["calibration"][finger][0],
+            self.mcp_joints["calibration"][finger][3] = self.linear_fit(90, 0, self.mcp_joints["calibration"][finger][0],
                                                                         self.mcp_joints["calibration"][finger][1])[1]
             
             # Adjust MCP interference with PIP
@@ -115,12 +119,28 @@ class WBA_Glove:
             min_pip_adjustment = self.linear_func(self.pip_joints["mcp_adjustment"][finger][1],
                                                   self.pip_joints["calibration"][finger][2],
                                                   self.pip_joints["calibration"][finger][3])
+                        
+            self.pip_joints["mcp_adjustment"][finger][2] = self.linear_fit(max_pip_adjustment, min_pip_adjustment,
+                                                                           self.mcp_joints["calibration"][finger][0],
+                                                                           self.mcp_joints["calibration"][finger][1])[0]
+            self.pip_joints["mcp_adjustment"][finger][3] = self.linear_fit(max_pip_adjustment, min_pip_adjustment,
+                                                                           self.mcp_joints["calibration"][finger][0],
+                                                                           self.mcp_joints["calibration"][finger][1])[1]
             
-            print(finger, max_pip_adjustment, min_pip_adjustment)
-            
-            [self.pip_joints["mcp_adjustment"][finger][2], self.pip_joints["mcp_adjustment"][finger][3]] = self.linear_fit(max_pip_adjustment, min_pip_adjustment,
-                                                                                                                           self.mcp_joints["calibration"][finger][0],
-                                                                                                                           self.mcp_joints["calibration"][finger][1])
+            # Adjust PIP interference with MCP
+            max_mcp_adjustment = self.linear_func(self.mcp_joints["pip_adjustment"][finger][0],
+                                                  self.mcp_joints["calibration"][finger][2],
+                                                  self.mcp_joints["calibration"][finger][3])
+            min_mcp_adjustment = self.linear_func(self.mcp_joints["pip_adjustment"][finger][1],
+                                                  self.mcp_joints["calibration"][finger][2],
+                                                  self.mcp_joints["calibration"][finger][3])
+                        
+            self.mcp_joints["pip_adjustment"][finger][2] = self.linear_fit(max_mcp_adjustment, min_mcp_adjustment,
+                                                                           self.pip_joints["calibration"][finger][0],
+                                                                           self.pip_joints["calibration"][finger][1])[0]
+            self.mcp_joints["pip_adjustment"][finger][3] = self.linear_fit(max_mcp_adjustment, min_mcp_adjustment,
+                                                                           self.pip_joints["calibration"][finger][0],
+                                                                           self.pip_joints["calibration"][finger][1])[1]
                 
     def update_MCP_extrema(self):
         for finger in fingers:
@@ -141,6 +161,11 @@ class WBA_Glove:
             self.pip_joints["calibration"][finger][1] = min(self.pip_joints["calibration"][finger][1], 
                                                             self.pip_joints["current_avg"][finger])
             
+            self.mcp_joints["pip_adjustment"][finger][0] = max(self.mcp_joints["pip_adjustment"][finger][0], 
+                                                               self.mcp_joints["current_avg"][finger])
+            self.mcp_joints["pip_adjustment"][finger][1] = min(self.mcp_joints["pip_adjustment"][finger][1], 
+                                                               self.mcp_joints["current_avg"][finger])
+            
     def linear_fit(self, y2, y1, x2, x1):
         m = (y2 - y1) / (x2 - x1)
         b = y2 - m * x2
@@ -152,12 +177,20 @@ class WBA_Glove:
 
     def update_mcp_angles(self, key):
         self.mcp_joints["current_avg"][key] =  (sum(self.mcp_joints["raw"][key]) / len(self.mcp_joints["raw"][key]) + 99) // 100 * 100
+        self.pip_joints["current_avg"][key] =  (sum(self.pip_joints["raw"][key]) / len(self.pip_joints["raw"][key]) + 99) // 100 * 100
         
-        x = self.mcp_joints["current_avg"][key]
-        m = self.mcp_joints["calibration"][key][2]
-        b = self.mcp_joints["calibration"][key][3]
+        x1 = self.mcp_joints["current_avg"][key]
+        m1 = self.mcp_joints["calibration"][key][2]
+        b1 = self.mcp_joints["calibration"][key][3]
         
-        self.mcp_joints["angle"][key] = m*x + b
+        x2 = self.pip_joints["current_avg"][key]
+        m2 = self.mcp_joints["pip_adjustment"][key][2]
+        b2 = self.mcp_joints["pip_adjustment"][key][3]
+        
+        mcp = (m1*x1 + b1)
+        mcp_error = (m2*x2 + b2)
+
+        self.mcp_joints["angle"][key] = mcp - mcp_error
         
     def update_pip_angles(self, key):
         self.pip_joints["current_avg"][key] =  (sum(self.pip_joints["raw"][key]) / len(self.pip_joints["raw"][key]) + 99) // 100 * 100
@@ -174,10 +207,8 @@ class WBA_Glove:
         pip = (m1*x1 + b1)
         pip_error = (m2*x2 + b2)
 
-        if pip > pip_error + 20:
-            self.pip_joints["angle"][key] = pip
-        else:
-            self.pip_joints["angle"][key] = pip - pip_error
+        self.pip_joints["angle"][key] = pip - pip_error
+        #self.pip_joints["adjustment"][key] = pip_error
 
 if __name__ == "__main__":
     glove = WBA_Glove()    
@@ -186,5 +217,5 @@ if __name__ == "__main__":
 
     while True:
         glove.read()
-        print(glove.pip_joints["angle"])
-        sleep(1e-1)
+        print(glove.pip_joints["angle"]["index"], glove.mcp_joints["angle"]["index"], end="\r")
+        sleep(1e-2)
