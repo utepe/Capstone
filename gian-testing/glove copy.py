@@ -121,8 +121,6 @@ class WBA_Glove:
                                                                         self.pip_joints["calibration_0"][finger][1])[1]
             self.pip_joints["raw"][finger] = []
 
-        print(self.pip_joints["calibration_0"]["index"])
-
         print("PIP, MCP @ 90")
 
         # Gather data to create PIP model
@@ -183,7 +181,7 @@ class WBA_Glove:
         
         mcp = (m1*x1 + b1)
 
-        self.mcp_joints["angle"][key] = mcp
+        self.mcp_joints["angle"][key] = max(0, mcp)
         
     def update_pip_angles(self, key):
         self.pip_joints["current_avg"][key] = (sum(self.pip_joints["raw"][key]) / len(self.pip_joints["raw"][key]) + 99) // 100 * 100
@@ -205,8 +203,15 @@ class WBA_Glove:
         angle_mcp_0 = m2 * pip + b2
         angle_mcp_90 = m3 * pip + b3
 
-        self.pip_readings[key] = [mcp, adjusted_angle, angle_mcp_0, angle_mcp_90, angle_mcp_0 - adjusted_angle]
-        self.pip_joints["angle"][key] = 1.3* (angle_mcp_90 - 0.15 * mcp)
+        if(mcp < 45 and mcp > 0):
+            pip = angle_mcp_0
+        else:
+            pip = angle_mcp_90
+
+        self.pip_joints["angle"][key] = self.bound(pip, 0, 90)
+
+    def bound(self, value, low, high):
+        return max(low, min(value, high))
 
 if __name__ == "__main__":
     glove = WBA_Glove()    
@@ -215,5 +220,5 @@ if __name__ == "__main__":
 
     while True:
         glove.read()
-        print(glove.mcp_joints["angle"]["index"], glove.pip_joints["angle"]["index"], end="\r")
+        print(glove.mcp_joints["angle"]["index"], glove.pip_joints["angle"]["index"])
         sleep(1e-2)
