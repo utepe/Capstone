@@ -206,7 +206,7 @@ class WBA_Glove:
         angle_mcp_90 = m3 * pip + b3
 
         self.pip_readings[key] = [mcp, adjusted_angle, angle_mcp_0, angle_mcp_90, angle_mcp_0 - adjusted_angle]
-        self.pip_joints["angle"][key] = angle_mcp_0
+        self.pip_joints["angle"][key] = 1.3* (angle_mcp_90 - 0.15 * mcp)
 
 if __name__ == "__main__":
     glove = WBA_Glove()    
