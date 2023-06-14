@@ -4,7 +4,6 @@ from enum import Enum
 from time import sleep
 from app import processing_readings as processing, unity_mode
 
-
 mcp_joints = processing.mcp_joints
 pip_joints = processing.pip_joints
 

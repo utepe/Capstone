@@ -8,33 +8,21 @@ def calculate_SMA_MCP(key, window_size=10):
     global mcp_joints
     if len(mcp_joints["raw"][key]) > window_size:
         mcp_joints["raw"][key].pop(0)
-    mcp_joints["current_avg"][key] =  round(sum(mcp_joints["raw"][key]) / len(mcp_joints["raw"][key]), -2)
+    mcp_joints["current_avg"][key] =  sum(mcp_joints["raw"][key]) / len(mcp_joints["raw"][key])
 
 # Calculate the simple moving average for each joint
 def calculate_SMA_PIP(key, window_size=10):
     global pip_joints
     if len(pip_joints["raw"][key]) > window_size:
         pip_joints["raw"][key].pop(0)
-    pip_joints["current_avg"][key] =  round(sum(pip_joints["raw"][key]) / len(pip_joints["raw"][key]), -2)
+    pip_joints["current_avg"][key] =  sum(pip_joints["raw"][key]) / len(pip_joints["raw"][key])
 
 
 fingers = ("thumb", "index", "middle", "ring", "pinky")
 
-# TODO: move all common variables to config.py to have them as shared global variables
 # first mux will track mcp joints, second mux will track pip joints
-mcp_joints = {
-    "calibration": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
-    "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, 
-    "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
-    "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
-}
-
-pip_joints = {
-    "calibration": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
-    "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, 
-    "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
-    "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
-}
+mcp_joints = { "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 } }
+pip_joints = { "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 } }
 
 sampling_time = 1000 # in nanoseconds
 
@@ -55,10 +43,10 @@ def read_sensors():
     i=0
     while i < len(fingers):
         select_pin(i, select_pins) 
-        mcp_joints["raw"][fingers[i]].append(round(z_mux_1.read_u16(), -2))
+        mcp_joints["raw"][fingers[i]].append(z_mux_1.read_u16())
          
         select_pin(i, select_pins)
-        pip_joints["raw"][fingers[i]].append(round(z_mux_2.read_u16(), -2))
+        pip_joints["raw"][fingers[i]].append(z_mux_2.read_u16())
         
         # Calculate the simple moving average for each joint
         calculate_SMA_MCP(fingers[i])
@@ -66,3 +54,22 @@ def read_sensors():
            
         if time_ns()%sampling_time < sampling_time/2:
             i+=1
+
+# define the true objective linear function
+def linear_func(x, a, b):
+    return a * x + b
+
+with open('relationships.json') as f:
+    file_data = f.read()
+relationships = json.loads(file_data)
+f.close()
+
+with open('sendToUnity.txt', 'w') as file:
+    while True:
+        read_sensors()
+        index_mcp_reading = linear_func(mcp_joints["current_avg"]["index"], *relationships["index_mcp"])
+        index_pip_reading = linear_func(pip_joints["current_avg"]["index"], *relationships["index_pip"])
+        data_to_send = str(index_mcp_reading) + ", " + str(index_pip_reading) + "\n"
+        file.write(data_to_send)
+        print(data_to_send, end='\r')
+        sleep(0.5)
