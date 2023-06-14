@@ -6,7 +6,7 @@ serial_port = 'COM7'  # Replace with your serial port
 baud_rate = 9600  # Replace with your baud rate
 
 # TCP connection configuration
-tcp_host = '10.0.0.17'  # Replace with the TCP server IP address
+tcp_host = '192.168.1.115'  # Replace with the TCP server IP address
 tcp_port = 25001  # Replace with the TCP server port
 
 # Create a serial connection
