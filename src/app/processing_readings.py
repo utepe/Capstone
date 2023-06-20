@@ -2,6 +2,7 @@ import json
 from machine import Pin, ADC
 from time import sleep
 from utime import time_ns
+from helpers import linear_func, bound
 
 # Calculate the simple moving average for each joint
 def calculate_SMA_MCP(key, window_size=10):
@@ -30,7 +31,8 @@ mcp_joints = {
 }
 
 pip_joints = {
-    "calibration": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
+    "calibration_0": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
+    "calibration_90": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
     "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, 
     "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
     "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
@@ -54,15 +56,39 @@ def select_pin(p, pins):
 def read_sensors(): 
     i=0
     while i < len(fingers):
-        select_pin(i, select_pins) 
+
+        select_pin(i, select_pins)
         mcp_joints["raw"][fingers[i]].append(round(z_mux_1.read_u16(), -2))
          
-        select_pin(i, select_pins)
         pip_joints["raw"][fingers[i]].append(round(z_mux_2.read_u16(), -2))
         
         # Calculate the simple moving average for each joint
         calculate_SMA_MCP(fingers[i])
         calculate_SMA_PIP(fingers[i])
+
+        update_mcp_angles(fingers[i])
+        update_pip_angles(fingers[i])
            
-        if time_ns()%sampling_time < sampling_time/2:
+        if time_ns() % sampling_time < sampling_time / 2:
             i+=1
+
+def update_mcp_angles(finger):
+    mcp = linear_func(mcp_joints["current_avg"][finger], mcp_joints["calibration"][finger][2], mcp_joints["calibration"][finger][3]) 
+
+    mcp_joints["angle"][finger] = bound(mcp, 0, 90)
+
+def update_pip_angles(finger):
+    mcp = mcp_joints["angle"][finger]
+    pip = pip_joints["current_avg"][finger]
+
+    angle_pip_0 = linear_func(pip, pip_joints["calibration_0"][finger][2], pip_joints["calibration_0"][finger][3])
+    angle_pip_90 = linear_func(pip, pip_joints["calibration_90"][finger][2], pip_joints["calibration_90"][finger][3])
+
+    if mcp < 45 and mcp > 0:
+        pip = angle_pip_0
+    else:
+        pip = angle_pip_90
+
+    pip_joints["angle"][finger] = bound(pip, 0, 90)
+
+
