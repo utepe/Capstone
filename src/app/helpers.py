@@ -6,6 +6,14 @@ Functions to help with the calibration and data processing
 def linear_func(x, a, b):
     return a * x + b
 
+def linear_fit(x1, x2, y1 = 0, y2 = 90):
+    m = (y2 - y1) / (x2 - x1)
+    b = y1 - m * x1
+    return m, b
+
+def bound(value, low, high):
+    return max(low, min(value, high))
+
 def func_glove(x, a, b, scale=1, offset=0):
     return scale*(a * x + b - offset)
 
