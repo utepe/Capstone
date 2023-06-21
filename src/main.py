@@ -2,7 +2,7 @@ import json
 from machine import Pin, time_ms
 from enum import Enum
 from time import sleep
-from app import processing_readings as processing, unity_mode
+from app import processing_readings as processing, unity_mode, calibration_mode
 
 mcp_joints = processing.mcp_joints
 pip_joints = processing.pip_joints
@@ -55,7 +55,7 @@ f.close()
 while True:
     if currentMode is mode.CALIBRATION:
         print(mode.CALIBRATION)
-        # run calibration script
+        calibration_mode.calibrate()
         # switch mode to UNITY
         currentMode = mode.UNITY
     elif currentMode is mode.UNITY:
