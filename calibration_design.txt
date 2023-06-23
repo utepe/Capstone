@@ -17,4 +17,8 @@ Curve Fitting can be done linearly or 3rd-order on each PIP and MCP joint
 
 Linear: average "OPEN" value and average "CLOSED" value and fit with y = mx + b
 
+Once all m and b values are calculated for mcp, pip_0, pip_90 maybe store those into relationship_file 
+ex) { "index_mcp": [m, b], "index_pip_0": [m, b], "index_pip_90": [m, b] } 
+this would be easier to implement if unity to pico via tcp/serial isnt possible
+
 MODE switches back to UNITY

@@ -52,6 +52,7 @@ with open('relationships.json') as f:
 relationships = json.loads(file_data)
 f.close()
 
+# default to calibration mode
 while True:
     if currentMode is mode.CALIBRATION:
         print(mode.CALIBRATION)
@@ -70,4 +71,7 @@ while True:
         print(mode.WBA)
     else:
         print(mode.IDLE)
+        # If input is recieved from serial port coming from Unity go into calibration mode then go into Unity Mode
+        # If the glove gets plugged into the WBA (and XXX signal goes high) go into WBA mode
+        # If the device is idle, do nothing
     sleep(0.1)

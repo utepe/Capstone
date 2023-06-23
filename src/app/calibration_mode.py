@@ -77,6 +77,8 @@ def calibrate():
 
         pip_joints["raw"][finger] = []
 
+    # TODO: send calibration m and b values to the relationships file
+    # ex) { "index_mcp": [m, b], "index_pip_0": [m, b], "index_pip_90": [m, b] } 
     print("Calibration complete")
 
 def update_PIP_extrema():
