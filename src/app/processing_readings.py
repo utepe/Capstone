@@ -72,6 +72,8 @@ def read_sensors():
         if time_ns() % sampling_time < sampling_time / 2:
             i+=1
 
+
+# TODO: instead of calling the calibration key within the joints dictionaries we will call the relationship file and pull from there
 def update_mcp_angles(finger):
     mcp = linear_func(mcp_joints["current_avg"][finger], mcp_joints["calibration"][finger][2], mcp_joints["calibration"][finger][3]) 
 
