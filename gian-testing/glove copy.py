@@ -55,11 +55,11 @@ class WBA_Glove:
             
             if len(self.mcp_joints["raw"][key]) > 10:
                 self.mcp_joints["raw"][key].pop(0)
-            self.mcp_joints["raw"][key].append((z_mux_1.read_u16() + 99) // 100 * 100)
+            self.mcp_joints["raw"][key].append((z_mux_1.read_u16() + 9) // 10 * 10)
             
             if len(self.pip_joints["raw"][key]) > 10:
                 self.pip_joints["raw"][key].pop(0)
-            self.pip_joints["raw"][key].append((z_mux_2.read_u16() + 99) // 100 * 100)
+            self.pip_joints["raw"][key].append((z_mux_2.read_u16() + 9) // 10 * 10)
             
             self.update_mcp_angles(key)
             self.update_pip_angles(key)
@@ -173,7 +173,7 @@ class WBA_Glove:
         return m * x + b
 
     def update_mcp_angles(self, key):
-        self.mcp_joints["current_avg"][key] = (sum(self.mcp_joints["raw"][key]) / len(self.mcp_joints["raw"][key]) + 99) // 100 * 100
+        self.mcp_joints["current_avg"][key] = (sum(self.mcp_joints["raw"][key]) / len(self.mcp_joints["raw"][key]) + 9) // 10 * 10
         
         x1 = self.mcp_joints["current_avg"][key]
         m1 = self.mcp_joints["calibration"][key][2]
@@ -181,11 +181,11 @@ class WBA_Glove:
         
         mcp = (m1*x1 + b1)
 
-        self.mcp_joints["angle"][key] = max(0, mcp)
+        self.mcp_joints["angle"][key] = self.bound(mcp, 0, 90)
         
     def update_pip_angles(self, key):
-        self.pip_joints["current_avg"][key] = (sum(self.pip_joints["raw"][key]) / len(self.pip_joints["raw"][key]) + 99) // 100 * 100
-        self.mcp_joints["current_avg"][key] = (sum(self.mcp_joints["raw"][key]) / len(self.mcp_joints["raw"][key]) + 99) // 100 * 100
+        self.pip_joints["current_avg"][key] = (sum(self.pip_joints["raw"][key]) / len(self.pip_joints["raw"][key]) + 9) // 10 * 10
+        self.mcp_joints["current_avg"][key] = (sum(self.mcp_joints["raw"][key]) / len(self.mcp_joints["raw"][key]) + 9) // 10 * 10
 
         mcp = self.mcp_joints["angle"][key]
         pip = self.pip_joints["current_avg"][key]
@@ -199,7 +199,6 @@ class WBA_Glove:
         m3 = self.pip_joints["calibration_90"][key][2]
         b3 = self.pip_joints["calibration_90"][key][3]
         
-        adjusted_angle = m1 * pip + b1
         angle_mcp_0 = m2 * pip + b2
         angle_mcp_90 = m3 * pip + b3
 
@@ -216,9 +215,9 @@ class WBA_Glove:
 if __name__ == "__main__":
     glove = WBA_Glove()    
     
-    glove.calibrate()
+    #glove.calibrate()
 
     while True:
         glove.read()
-        print(glove.mcp_joints["angle"]["index"], glove.pip_joints["angle"]["index"])
+        print(glove.pip_joints["current_avg"]["index"])
         sleep(1e-2)
