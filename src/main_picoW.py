@@ -1,10 +1,25 @@
 import network
 import socket
 from time import sleep
-import machine
+from machine import Pin, reset
+from enum import Enum
+import json
+
+from app import WBA_mode, calibration_mode, unity_mode
 
 ssid = "Truva"
 password = "bizimevimiz"
+
+client_socket = None
+
+# TODO: cahnge this pin number
+WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
+
+class mode(Enum):
+    IDLE = 0
+    CALIBRATION = 1
+    UNITY = 2
+    WBA = 3
 
 def connect():
     #Connect to WLAN
@@ -28,16 +43,27 @@ def open_socket(ip):
 # first check if the glove is connected to WBA to enter that mode
 # If the glove is not in WBA mode then accept the socket and handle the socket requests 
 def serve(sock):
-    client_socket, client_address = sock.accept()
-    print('Connected to client:', client_address)
+    global client_socket
     while True:
-        unityData = client_socket.recv(1024)
-        if unityData == "calibration_step_1":
-
-
+        # check if in WBA mode
+        if WBA_pin.value(): # WBA mode
+            WBA_mode.sendData()
+        else:
+            if client_socket is None:
+                client_socket, client_address = sock.accept()
+                print('Connected to client:', client_address)
+            unityData = client_socket.recv(1024)
+            # TODO: pass in client_socket to calibration_mode and unity_mode
+            if unityData == "calibration":  # CALIBRATION mode
+                calibration_mode.calibrate()
+            elif unityData == "unityMode":  # UNITY mode
+                unity_mode.sendData()
+            else:   # IDLE mode
+                pass
+                
 try:
     ip = connect()
     sock = open_socket(ip)
     serve(sock)
 except KeyboardInterrupt:
-    machine.reset()
+    reset()
