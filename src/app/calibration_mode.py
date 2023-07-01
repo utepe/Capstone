@@ -10,7 +10,7 @@ fingers = processing.fingers
 def calibrate():
     state = ("OPEN", "CLOSE")
 
-    print("MCP changing, PIP fixed @ 90")
+    print("MCP changing, PIP fixed @ 0")
     i = 0
     time = time_ns()
     while i < 3:
