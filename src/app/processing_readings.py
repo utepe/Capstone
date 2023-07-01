@@ -18,7 +18,6 @@ def calculate_SMA_PIP(key, window_size=10):
         pip_joints["raw"][key].pop(0)
     pip_joints["current_avg"][key] =  round(sum(pip_joints["raw"][key]) / len(pip_joints["raw"][key]), -2)
 
-
 fingers = ("thumb", "index", "middle", "ring", "pinky")
 
 # TODO: move all common variables to config.py to have them as shared global variables
@@ -53,6 +52,7 @@ def select_pin(p, pins):
     for i in range(3): 
         pins[i].value((p >> i) & 1)
 
+# TODO: round to nearest TENS
 def read_sensors(): 
     i=0
     while i < len(fingers):
@@ -93,4 +93,9 @@ def update_pip_angles(finger):
 
     pip_joints["angle"][finger] = bound(pip, 0, 90)
 
-
+def get_relationship():
+    global relationships
+    with open('relationships.json') as f:
+        file_data = f.read()
+    relationships = json.loads(file_data)
+    f.close()
