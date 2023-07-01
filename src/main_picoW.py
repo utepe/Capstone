@@ -53,11 +53,11 @@ def serve(sock):
                 client_socket, client_address = sock.accept()
                 print('Connected to client:', client_address)
             unityData = client_socket.recv(1024)
-            # TODO: pass in client_socket to calibration_mode and unity_mode
+            # TODO: pass in client_socket to calibration_mode
             if unityData == "calibration":  # CALIBRATION mode
                 calibration_mode.calibrate()
             elif unityData == "unityMode":  # UNITY mode
-                unity_mode.sendData()
+                unity_mode.sendData(client_socket)
             else:   # IDLE mode
                 pass
                 
