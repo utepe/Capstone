@@ -9,14 +9,14 @@ def calculate_SMA_MCP(key, window_size=10):
     global mcp_joints
     if len(mcp_joints["raw"][key]) > window_size:
         mcp_joints["raw"][key].pop(0)
-    mcp_joints["current_avg"][key] =  round(sum(mcp_joints["raw"][key]) / len(mcp_joints["raw"][key]), -2)
+    mcp_joints["current_avg"][key] =  round(sum(mcp_joints["raw"][key]) / len(mcp_joints["raw"][key]), -1)
 
 # Calculate the simple moving average for each joint
 def calculate_SMA_PIP(key, window_size=10):
     global pip_joints
     if len(pip_joints["raw"][key]) > window_size:
         pip_joints["raw"][key].pop(0)
-    pip_joints["current_avg"][key] =  round(sum(pip_joints["raw"][key]) / len(pip_joints["raw"][key]), -2)
+    pip_joints["current_avg"][key] =  round(sum(pip_joints["raw"][key]) / len(pip_joints["raw"][key]), -1)
 
 fingers = ("thumb", "index", "middle", "ring", "pinky")
 
@@ -52,15 +52,14 @@ def select_pin(p, pins):
     for i in range(3): 
         pins[i].value((p >> i) & 1)
 
-# TODO: round to nearest TENS
 def read_sensors(): 
     i=0
     while i < len(fingers):
 
         select_pin(i, select_pins)
-        mcp_joints["raw"][fingers[i]].append(round(z_mux_1.read_u16(), -2))
+        mcp_joints["raw"][fingers[i]].append(round(z_mux_1.read_u16(), -1))
          
-        pip_joints["raw"][fingers[i]].append(round(z_mux_2.read_u16(), -2))
+        pip_joints["raw"][fingers[i]].append(round(z_mux_2.read_u16(), -1))
         
         # Calculate the simple moving average for each joint
         calculate_SMA_MCP(fingers[i])
@@ -72,10 +71,8 @@ def read_sensors():
         if time_ns() % sampling_time < sampling_time / 2:
             i+=1
 
-
-# TODO: instead of calling the calibration key within the joints dictionaries we will call the relationship file and pull from there
 def update_mcp_angles(finger):
-    mcp = linear_func(mcp_joints["current_avg"][finger], mcp_joints["calibration"][finger][2], mcp_joints["calibration"][finger][3]) 
+    mcp = linear_func(mcp_joints["current_avg"][finger], *relationships[finger + "_mcp"]) 
 
     mcp_joints["angle"][finger] = bound(mcp, 0, 90)
 
@@ -83,8 +80,8 @@ def update_pip_angles(finger):
     mcp = mcp_joints["angle"][finger]
     pip = pip_joints["current_avg"][finger]
 
-    angle_pip_0 = linear_func(pip, pip_joints["calibration_0"][finger][2], pip_joints["calibration_0"][finger][3])
-    angle_pip_90 = linear_func(pip, pip_joints["calibration_90"][finger][2], pip_joints["calibration_90"][finger][3])
+    angle_pip_0 = linear_func(pip, *relationships[finger + "_pip_0"])
+    angle_pip_90 = linear_func(pip, *relationships[finger + "_pip_90"])
 
     if mcp < 45 and mcp > 0:
         pip = angle_pip_0
@@ -95,7 +92,7 @@ def update_pip_angles(finger):
 
 def get_relationship():
     global relationships
-    with open('relationships.json') as f:
+    with open('src/common/relationships.json') as f:
         file_data = f.read()
     relationships = json.loads(file_data)
     f.close()
