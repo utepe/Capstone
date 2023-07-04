@@ -5,7 +5,7 @@ def func_glove(x, a, b, c, d):
 '''
 
 '''
-NOTE: micopython does have scipy 
+NOTE: micopython does not have scipy 
 meaning glove calibration will be done using computer? 
 so alter the func_glove to have default values, test by comparing output of this to curve fit values 
 def func_glove(x, a, b, c, d, offset=0, scale=1):

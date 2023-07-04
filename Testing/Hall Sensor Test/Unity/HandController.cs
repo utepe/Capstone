@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class HandController : MonoBehaviour
 {
-    SerialPort stream = new SerialPort("/dev/ttyACM0", 9600);
+    SerialPort stream = new SerialPort("COM3", 9600);
     public float sensitvity = 0.01f;
 
     // b_l_index1 -> index_mcp, b_l_index2 -> index_pip, b_l_index3 -> index_dip

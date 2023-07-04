@@ -1,0 +1,24 @@
+When mode is switched to CALIBRATION
+
+    1. Wait 5 seconds
+    2. Prompt "OPEN" using LED (take timestamp)
+    3. Wait 2 seconds
+    4. Prompt "CLOSE" using LED (take timestamp)
+    5. Wait 2 seconds
+    6. Repeat 5x
+
+Data from this time period stored into a structure with columns:
+
+time | command | MCP (mV) | PIP (mV)
+
+During an interval in which hand is "OPEN" or "CLOSED", take min/max according to glove description file. 
+
+Curve Fitting can be done linearly or 3rd-order on each PIP and MCP joint
+
+Linear: average "OPEN" value and average "CLOSED" value and fit with y = mx + b
+
+Once all m and b values are calculated for mcp, pip_0, pip_90 maybe store those into relationship_file 
+ex) { "index_mcp": [m, b], "index_pip_0": [m, b], "index_pip_90": [m, b] } 
+this would be easier to implement if unity to pico via tcp/serial isnt possible
+
+MODE switches back to UNITY
