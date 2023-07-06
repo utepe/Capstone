@@ -51,30 +51,29 @@ def open_socket(ip):
 def serve(sock, glove):
     global client_socket
     currentMode = Mode[0]
+    unityData = None
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        unityData = client_socket.recv(1024).decode("utf-8")
-        if unityData == "calibration":  # CALIBRATION mode
-            currentMode = Mode[1]
-            # glove.calibrate(client_socket)
-        elif unityData == "unityMode":  # UNITY mode
-            currentMode = Mode[2]
-            # glove.send_data_to_VR(client_socket)
-        else:   # IDLE mode
-            # currentMode = Mode[0]
-            pass
-        
-        if currentMode == "CALIBRATION":
-            glove.calibrate(client_socket)
-            currentMode = Mode[0]
-        elif currentMode == "UNITY":
-
-            glove.send_data_to_VR(client_socket)
-        elif currentMode == "WBA":
-            glove.send_data_to_WBA()
+        # TODO: Determine better solution to stop blocking from occuring when waiting to recieve Data
+        if unityData is None:
+            unityData = client_socket.recv(1024).decode("utf-8")
+            if unityData == "calibration":  # CALIBRATION mode
+                currentMode = Mode[1]
+            elif unityData == "unityMode":  # UNITY mode
+                currentMode = Mode[2]
+            else:   # IDLE mode
+                currentMode = Mode[0]
         else:
-            pass
+            if currentMode == "CALIBRATION":
+                glove.calibrate(client_socket)
+                currentMode = Mode[0]
+            elif currentMode == "UNITY":
+                glove.send_data_to_VR(client_socket)
+            elif currentMode == "WBA":
+                glove.send_data_to_WBA()
+            else:
+                pass
 
 class Glove():
     def __init__(self):
@@ -166,18 +165,19 @@ class Glove():
                 print(state[i % 2])
                 i += 1
 
+        for finger in fingers:
+            self.pip_joints["calibration_0"][finger][2], self.pip_joints["calibration_0"][finger][3] = self.linear_fit(self.pip_joints["calibration_0"][finger][0], self.pip_joints["calibration_0"][finger][1])
+
+            self.pip_joints["raw"][finger] = []
+
         client_socket.send("complete".encode('utf-8'))
 
         while True:
             calibrationMsg = client_socket.recv(1024).decode("utf-8")
             if calibrationMsg == "calibration_step_3":
+                print("calibration step 3 msg received")
                 break
-
-        for finger in fingers:
-            self.pip_joints["calibration_0"][finger][2], self.pip_joints["calibration_0"][finger][3] = self.linear_fit(self.pip_joints["calibration_0"][finger][0], self.pip_joints["calibration_0"][finger][1])
-
-            self.pip_joints["raw"][finger] = []
-        
+            
         print("MCP fixed @ 90, PIP changing")
 
         i = 0
@@ -194,6 +194,7 @@ class Glove():
                 print(state[i % 2])
                 i += 1
 
+        client_socket.send("complete".encode('utf-8'))
 
         for finger in fingers:
             self.pip_joints["calibration_90"][finger][2], self.pip_joints["calibration_90"][finger][3] = self.linear_fit(self.pip_joints["calibration_90"][finger][0], self.pip_joints["calibration_90"][finger][1])
@@ -209,6 +210,7 @@ class Glove():
         self.read_sensors()
         self.update_angles()
         data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"])
+        # print(data_to_send, end='\r') # TODO: remove this print
         client_socket.send(data_to_send.encode('utf-8'))
     
     # TODO: update this once Stevo is done
@@ -264,6 +266,7 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
+    # TODO: make y1=90 and y2=0
     def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
