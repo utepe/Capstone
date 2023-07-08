@@ -1,6 +1,6 @@
 import json
 from machine import Pin, ADC, reset
-from time import sleep
+from time import sleep, sleep_ms
 from utime import time_ns
 import network
 import socket
@@ -209,9 +209,10 @@ class Glove():
     def send_data_to_VR(self, client_socket):
         self.read_sensors()
         self.update_angles()
-        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"])
+        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + "\n"
         # print(data_to_send, end='\r') # TODO: remove this print
         client_socket.send(data_to_send.encode('utf-8'))
+        sleep_ms(10)
     
     # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
@@ -247,7 +248,7 @@ class Glove():
     def update_mcp_angles(self, finger):
         mcp = self.linear_func(self.mcp_joints["current_avg"][finger], *self.relationships[finger + "_mcp"]) 
 
-        self.mcp_joints["angle"][finger] = self.bound(mcp, 0, 90)
+        self.mcp_joints["angle"][finger] = round(self.bound(mcp, 0, 90), 2)
 
     def update_pip_angles(self, finger):
         mcp = self.mcp_joints["angle"][finger]
@@ -261,13 +262,13 @@ class Glove():
         else:
             pip = angle_pip_90
 
-        self.pip_joints["angle"][finger] = self.bound(pip, 0, 90)
+        self.pip_joints["angle"][finger] = round(self.bound(pip, 0, 90), 2)
 
     def linear_func(self, x, a, b):
         return a * x + b
 
     # TODO: make y1=90 and y2=0
-    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
+    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b
