@@ -142,7 +142,6 @@ class Glove():
             self.pip_joints["raw"][finger] = []
 
         client_socket.send("complete".encode('utf-8'))
-        print("sent complete")
 
         while True:
             calibrationMsg = client_socket.recv(1024).decode("utf-8")
@@ -209,7 +208,7 @@ class Glove():
     def send_data_to_VR(self, client_socket):
         self.read_sensors()
         self.update_angles()
-        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + "\n"
+        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
         # print(data_to_send, end='\r') # TODO: remove this print
         client_socket.send(data_to_send.encode('utf-8'))
         sleep_ms(10)
