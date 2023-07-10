@@ -55,7 +55,8 @@ def serve(sock, glove):
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        # TODO: Determine better solution to stop blocking from occuring when waiting to recieve Data
+        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since itll just IDLE until it recieves data from unity
+        # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
         if unityData is None:
             unityData = client_socket.recv(1024).decode("utf-8")
             if unityData == "calibration":  # CALIBRATION mode
@@ -110,8 +111,6 @@ class Glove():
             # Calculate the simple moving average for each joint
             self.calculate_SMA_MCP(fingers[i])
             self.calculate_SMA_PIP(fingers[i])
-            
-            # FLAG: removed the angle calculation for now since cannot call update angles during calibration
 
             if time_ns() % sampling_time < sampling_time / 2:
                 i+=1
@@ -209,7 +208,6 @@ class Glove():
         self.read_sensors()
         self.update_angles()
         data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
-        # print(data_to_send, end='\r') # TODO: remove this print
         client_socket.send(data_to_send.encode('utf-8'))
         sleep_ms(10)
     
@@ -266,7 +264,6 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
-    # TODO: make y1=90 and y2=0
     def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
