@@ -22,8 +22,8 @@ z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 
-ssid = "Truva"
-password = "bizimevimiz"
+ssid = "wicip"
+password = "wicipwifi"
 
 client_socket = None
 
@@ -55,9 +55,9 @@ def serve(sock, glove):
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since itll just IDLE until it recieves data from unity
+        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since it'll just IDLE until it recieves data from unity
         # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
-        if unityData is None:
+        if unityData is None or currentMode == "IDLE":
             unityData = client_socket.recv(1024).decode("utf-8")
             if unityData == "calibration":  # CALIBRATION mode
                 currentMode = Mode[1]
@@ -209,6 +209,7 @@ class Glove():
         self.update_angles()
         data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
         client_socket.send(data_to_send.encode('utf-8'))
+        # TODO: remove this 10ms sleep and test again
         sleep_ms(10)
     
     # TODO: update this once Stevo is done
