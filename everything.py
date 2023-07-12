@@ -26,8 +26,6 @@ WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 ssid = "Truva"
 password = "bizimevimiz"
 
-client_socket = None
-
 def connect():
     #Connect to WLAN
     wlan = network.WLAN(network.STA_IF)
@@ -50,7 +48,6 @@ def open_socket(ip):
 # first check if the glove is connected to WBA to enter that mode
 # If the glove is not in WBA mode then accept the socket and handle the socket requests 
 def serve(sock, glove):
-    global client_socket
     currentMode = Mode[0]
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
