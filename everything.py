@@ -51,13 +51,11 @@ def open_socket(ip):
 def serve(sock, glove):
     global client_socket
     currentMode = Mode[0]
-    unityData = None
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since it'll just IDLE until it recieves data from unity
         # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
-        if unityData is None or currentMode == "IDLE":
+        if currentMode == "IDLE":
             unityData = client_socket.recv(1024).decode("utf-8")
             if unityData == "calibration":  # CALIBRATION mode
                 currentMode = Mode[1]
@@ -71,6 +69,7 @@ def serve(sock, glove):
                 currentMode = Mode[0]
             elif currentMode == "UNITY":
                 glove.send_data_to_VR(client_socket)
+                # TODO: poll Unity and see if "stopSending" message is recieved, if it is switchMode back to IDLE
             elif currentMode == "WBA":
                 glove.send_data_to_WBA()
             else:
