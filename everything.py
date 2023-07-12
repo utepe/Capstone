@@ -22,8 +22,9 @@ z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 
-ssid = "wicip"
-password = "wicipwifi"
+# NOTE: This SSID and password should be changed based on the network being used
+ssid = "Truva"
+password = "bizimevimiz"
 
 client_socket = None
 
@@ -54,16 +55,6 @@ def serve(sock, glove):
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
-        if currentMode == "IDLE":
-            unityData = client_socket.recv(1024).decode("utf-8")
-            if unityData == "calibration":  # CALIBRATION mode
-                currentMode = Mode[1]
-            elif unityData == "unityMode":  # UNITY mode
-                currentMode = Mode[2]
-            else:   # IDLE mode
-                currentMode = Mode[0]
-        else:
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
@@ -72,8 +63,14 @@ def serve(sock, glove):
                 # TODO: poll Unity and see if "stopSending" message is recieved, if it is switchMode back to IDLE
             elif currentMode == "WBA":
                 glove.send_data_to_WBA()
-            else:
-                pass
+            else:  # IDLE mode
+                unityData = client_socket.recv(1024).decode("utf-8")
+                if unityData == "calibration":  # CALIBRATION mode
+                    currentMode = Mode[1]
+                elif unityData == "unityMode":  # UNITY mode
+                    currentMode = Mode[2]
+                else:  # remain in IDLE mode
+                    currentMode = Mode[0]
 
 class Glove():
     def __init__(self):
