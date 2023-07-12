@@ -12,3 +12,7 @@ python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+## Unity Hand Model
+The Unity hand model can be found in the following repository, [Unity Hand Model](https://github.com/utepe/UnityHandModel). Note: [Git Large File Storage (LFS)](https://git-lfs.com/) should be downloaded and installed before pulling the repo
+ - The scene can be loaded by opening the project in Unity then going to Assets>Scenes then double-clicking on the HandModel Scene
