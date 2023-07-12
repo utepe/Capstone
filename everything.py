@@ -1,6 +1,6 @@
 import json
 from machine import Pin, ADC, reset
-from time import sleep
+from time import sleep, sleep_ms
 from utime import time_ns
 import network
 import socket
@@ -22,8 +22,8 @@ z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 
-ssid = "Truva"
-password = "bizimevimiz"
+ssid = "wicip"
+password = "wicipwifi"
 
 client_socket = None
 
@@ -51,30 +51,30 @@ def open_socket(ip):
 def serve(sock, glove):
     global client_socket
     currentMode = Mode[0]
+    unityData = None
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        unityData = client_socket.recv(1024).decode("utf-8")
-        if unityData == "calibration":  # CALIBRATION mode
-            currentMode = Mode[1]
-            # glove.calibrate(client_socket)
-        elif unityData == "unityMode":  # UNITY mode
-            currentMode = Mode[2]
-            # glove.send_data_to_VR(client_socket)
-        else:   # IDLE mode
-            # currentMode = Mode[0]
-            pass
-        
-        if currentMode == "CALIBRATION":
-            glove.calibrate(client_socket)
-            currentMode = Mode[0]
-        elif currentMode == "UNITY":
-
-            glove.send_data_to_VR(client_socket)
-        elif currentMode == "WBA":
-            glove.send_data_to_WBA()
+        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since it'll just IDLE until it recieves data from unity
+        # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
+        if unityData is None or currentMode == "IDLE":
+            unityData = client_socket.recv(1024).decode("utf-8")
+            if unityData == "calibration":  # CALIBRATION mode
+                currentMode = Mode[1]
+            elif unityData == "unityMode":  # UNITY mode
+                currentMode = Mode[2]
+            else:   # IDLE mode
+                currentMode = Mode[0]
         else:
-            pass
+            if currentMode == "CALIBRATION":
+                glove.calibrate(client_socket)
+                currentMode = Mode[0]
+            elif currentMode == "UNITY":
+                glove.send_data_to_VR(client_socket)
+            elif currentMode == "WBA":
+                glove.send_data_to_WBA()
+            else:
+                pass
 
 class Glove():
     def __init__(self):
@@ -111,8 +111,6 @@ class Glove():
             # Calculate the simple moving average for each joint
             self.calculate_SMA_MCP(fingers[i])
             self.calculate_SMA_PIP(fingers[i])
-            
-            # FLAG: removed the angle calculation for now since cannot call update angles during calibration
 
             if time_ns() % sampling_time < sampling_time / 2:
                 i+=1
@@ -143,7 +141,6 @@ class Glove():
             self.pip_joints["raw"][finger] = []
 
         client_socket.send("complete".encode('utf-8'))
-        print("sent complete")
 
         while True:
             calibrationMsg = client_socket.recv(1024).decode("utf-8")
@@ -166,18 +163,19 @@ class Glove():
                 print(state[i % 2])
                 i += 1
 
+        for finger in fingers:
+            self.pip_joints["calibration_0"][finger][2], self.pip_joints["calibration_0"][finger][3] = self.linear_fit(self.pip_joints["calibration_0"][finger][0], self.pip_joints["calibration_0"][finger][1])
+
+            self.pip_joints["raw"][finger] = []
+
         client_socket.send("complete".encode('utf-8'))
 
         while True:
             calibrationMsg = client_socket.recv(1024).decode("utf-8")
             if calibrationMsg == "calibration_step_3":
+                print("calibration step 3 msg received")
                 break
-
-        for finger in fingers:
-            self.pip_joints["calibration_0"][finger][2], self.pip_joints["calibration_0"][finger][3] = self.linear_fit(self.pip_joints["calibration_0"][finger][0], self.pip_joints["calibration_0"][finger][1])
-
-            self.pip_joints["raw"][finger] = []
-        
+            
         print("MCP fixed @ 90, PIP changing")
 
         i = 0
@@ -194,6 +192,7 @@ class Glove():
                 print(state[i % 2])
                 i += 1
 
+        client_socket.send("complete".encode('utf-8'))
 
         for finger in fingers:
             self.pip_joints["calibration_90"][finger][2], self.pip_joints["calibration_90"][finger][3] = self.linear_fit(self.pip_joints["calibration_90"][finger][0], self.pip_joints["calibration_90"][finger][1])
@@ -208,8 +207,10 @@ class Glove():
     def send_data_to_VR(self, client_socket):
         self.read_sensors()
         self.update_angles()
-        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + "\n"
+        data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
         client_socket.send(data_to_send.encode('utf-8'))
+        # TODO: remove this 10ms sleep and test again
+        sleep_ms(10)
     
     # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
@@ -245,7 +246,7 @@ class Glove():
     def update_mcp_angles(self, finger):
         mcp = self.linear_func(self.mcp_joints["current_avg"][finger], *self.relationships[finger + "_mcp"]) 
 
-        self.mcp_joints["angle"][finger] = self.bound(mcp, 0, 90)
+        self.mcp_joints["angle"][finger] = round(self.bound(mcp, 0, 90), 2)
 
     def update_pip_angles(self, finger):
         mcp = self.mcp_joints["angle"][finger]
@@ -259,12 +260,12 @@ class Glove():
         else:
             pip = angle_pip_90
 
-        self.pip_joints["angle"][finger] = self.bound(pip, 0, 90)
+        self.pip_joints["angle"][finger] = round(self.bound(pip, 0, 90), 2)
 
     def linear_func(self, x, a, b):
         return a * x + b
 
-    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
+    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b
