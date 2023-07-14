@@ -26,8 +26,8 @@ WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 led = machine.Pin("LED", machine.Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
-ssid = "STEVEN_OFFICE"
-password = "094ADADEA"
+ssid = "wicip"
+password = "wicipwifi"
 
 def connect():
     #Connect to WLAN
