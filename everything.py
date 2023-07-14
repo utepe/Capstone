@@ -283,10 +283,8 @@ class Glove():
                 self.set_relationships()
                 f.write(json.dumps(self.relationships))
 
-
     def write_to_relationships(self):
         self.set_relationships()
-        
         with open('relationships.json', 'w') as f:
             f.write(json.dumps(self.relationships))
 
