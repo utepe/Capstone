@@ -21,7 +21,9 @@ z_mux_1 = ADC(Pin(27))    # Z1~GP27
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
+led = machine.Pin("LED", machine.Pin.OUT)
 
+# NOTE: This SSID and password should be changed based on the network being used
 ssid = "wicip"
 password = "wicipwifi"
 
@@ -33,10 +35,11 @@ def connect():
     wlan.active(True)
     wlan.connect(ssid, password)
     while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        sleep(1)
+        led.toggle()
+        sleep(1e-2)
     ip = wlan.ifconfig()[0]
     print(f'Connected on {ip}')
+    led.on()
     return ip
 
 def open_socket(ip):
