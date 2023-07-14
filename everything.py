@@ -21,7 +21,7 @@ z_mux_1 = ADC(Pin(27))    # Z1~GP27
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
-led = machine.Pin("LED", machine.Pin.OUT)
+led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
 ssid = "wicip"
