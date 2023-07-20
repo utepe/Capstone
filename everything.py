@@ -20,7 +20,14 @@ select_pins = [Pin(i, Pin.OUT) for i in select_pin_nums]
 z_mux_1 = ADC(Pin(27))    # Z1~GP27
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
-WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
+WBA_pin = Pin(1, mode=Pin.IN, pull=Pin.PULL_UP)
+
+thumbPin = Pin(5, Pin.OUT)
+indexPin = Pin(6, Pin.OUT)
+middlePin = Pin(7, Pin.OUT)
+ringPin = Pin(8, Pin.OUT)
+pinkyPin = Pin(9, Pin.OUT)
+
 led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
