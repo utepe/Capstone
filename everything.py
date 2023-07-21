@@ -1,3 +1,4 @@
+import uselect as select
 import json
 from machine import Pin, ADC, reset
 from time import sleep, sleep_ms
@@ -54,22 +55,35 @@ def serve(sock, glove):
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        if currentMode == "CALIBRATION":
-            glove.calibrate(client_socket)
-            currentMode = Mode[0]
-        elif currentMode == "UNITY":
-            glove.send_data_to_VR(client_socket)
-            # TODO: poll Unity and see if "stopSending" message is recieved, if it is switchMode back to IDLE
-        elif currentMode == "WBA":
-            glove.send_data_to_WBA()
-        else:  # IDLE mode
-            unityData = client_socket.recv(1024).decode("utf-8")
-            if unityData == "calibration":  # CALIBRATION mode
-                currentMode = Mode[1]
-            elif unityData == "unityMode":  # UNITY mode
-                currentMode = Mode[2]
-            else:  # remain in IDLE mode
+        try:
+            # Wait for data from the client socket or raise an exception if no data is received
+            ready_to_read, _, _ = select.select([client_socket], [], [], 0.01)
+
+            if currentMode == "CALIBRATION":
+                glove.calibrate(client_socket)
                 currentMode = Mode[0]
+            elif currentMode == "UNITY":
+                if ready_to_read:
+                    unityData = client_socket.recv(1024).decode("utf-8")
+                    if unityData == "stopSending":
+                        currentMode = Mode[0]
+                else:
+                    glove.send_data_to_VR(client_socket)
+            elif currentMode == "WBA":
+                glove.send_data_to_WBA()
+            else:  # IDLE mode
+                if ready_to_read:
+                    unityData = client_socket.recv(1024).decode("utf-8")
+                    if unityData == "calibration":  # CALIBRATION mode
+                        currentMode = Mode[1]
+                    elif unityData == "unityMode":  # UNITY mode
+                        currentMode = Mode[2]
+                    else:  # remain in IDLE mode
+                        currentMode = Mode[0]
+
+        except OSError as e:
+            print("OS Error occurred while serving: ", e)
+            pass
 
 class Glove():
     def __init__(self):
