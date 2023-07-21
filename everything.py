@@ -1,3 +1,4 @@
+import uselect as select
 import json
 from machine import Pin, ADC, reset
 from time import sleep, sleep_ms
@@ -24,10 +25,8 @@ WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
 led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
-ssid = "wicip"
-password = "wicipwifi"
-
-client_socket = None
+ssid = "Truva"
+password = "bizimevimiz"
 
 def connect():
     #Connect to WLAN
@@ -52,32 +51,39 @@ def open_socket(ip):
 # first check if the glove is connected to WBA to enter that mode
 # If the glove is not in WBA mode then accept the socket and handle the socket requests 
 def serve(sock, glove):
-    global client_socket
     currentMode = Mode[0]
-    unityData = None
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
-        # TODO: Test mayebe checking if UnityData is None or currentMode == "IDLE" since it'll just IDLE until it recieves data from unity
-        # TODO: Determine how we can switch from sendToVR back to calibration wihtout restarting app
-        if unityData is None or currentMode == "IDLE":
-            unityData = client_socket.recv(1024).decode("utf-8")
-            if unityData == "calibration":  # CALIBRATION mode
-                currentMode = Mode[1]
-            elif unityData == "unityMode":  # UNITY mode
-                currentMode = Mode[2]
-            else:   # IDLE mode
-                currentMode = Mode[0]
-        else:
+        try:
+            # Wait for data from the client socket or raise an exception if no data is received
+            ready_to_read, _, _ = select.select([client_socket], [], [], 0.01)
+
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
             elif currentMode == "UNITY":
-                glove.send_data_to_VR(client_socket)
+                if ready_to_read:
+                    unityData = client_socket.recv(1024).decode("utf-8")
+                    if unityData == "stopSending":
+                        currentMode = Mode[0]
+                else:
+                    glove.send_data_to_VR(client_socket)
             elif currentMode == "WBA":
                 glove.send_data_to_WBA()
-            else:
-                pass
+            else:  # IDLE mode
+                if ready_to_read:
+                    unityData = client_socket.recv(1024).decode("utf-8")
+                    if unityData == "calibration":  # CALIBRATION mode
+                        currentMode = Mode[1]
+                    elif unityData == "unityMode":  # UNITY mode
+                        currentMode = Mode[2]
+                    else:  # remain in IDLE mode
+                        currentMode = Mode[0]
+
+        except OSError as e:
+            print("OS Error occurred while serving: ", e)
+            pass
 
 class Glove():
     def __init__(self):
