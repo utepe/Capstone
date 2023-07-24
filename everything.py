@@ -1,5 +1,5 @@
 import json
-from machine import Pin, ADC, reset
+from machine import Pin, ADC, PWM, reset
 from time import sleep, sleep_ms
 from utime import time_ns
 import network
@@ -22,11 +22,17 @@ z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
 WBA_pin = Pin(1, mode=Pin.IN, pull=Pin.PULL_UP)
 
-thumbPin = Pin(5, Pin.OUT)
-indexPin = Pin(6, Pin.OUT)
-middlePin = Pin(7, Pin.OUT)
-ringPin = Pin(8, Pin.OUT)
-pinkyPin = Pin(9, Pin.OUT)
+thumbPWM = PWM(Pin(5))
+indexPWM = PWM(Pin(6))
+middlePWM = PWM(Pin(7))
+ringPWM = PWM(Pin(8))
+pinkyPWM = PWM(Pin(9))
+
+thumbPWM.freq(50)
+indexPWM.freq(50)
+middlePWM.freq(50)
+ringPWM.freq(50)
+pinkyPWM.freq(50)
 
 led = Pin("LED", Pin.OUT)
 
@@ -224,7 +230,26 @@ class Glove():
     
     # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
-        pass
+        self.read_sensors()
+        self.update_angles()
+        WBA_mcp_angle_ratio = 0.35
+        thumb_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["thumb"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["thumb"])
+        index_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["index"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["index"])
+        middle_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["middle"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["middle"])
+        ring_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["ring"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["ring"])
+        pinky_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["pinky"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["pinky"])
+
+        thumbDutyCycle = int((6000*thumb_angle/180)+2000)
+        indexDutyCycle = int((6000*index_angle/180)+2000)
+        middleDutyCycle = int((6000*middle_angle/180)+2000)
+        ringDutyCycle = int((6000*(180-ring_angle)/180)+2000)
+        pinkyDutyCycle = int((6000*(180-pinky_angle)/180)+2000)
+
+        thumbPWM.duty_u16(thumbDutyCycle)
+        indexPWM.duty_u16(indexDutyCycle)
+        middlePWM.duty_u16(middleDutyCycle)
+        ringPWM.duty_u16(ringDutyCycle)
+        pinkyPWM.duty_u16(pinkyDutyCycle)
 
     def update_angles(self):
         for finger in fingers:
