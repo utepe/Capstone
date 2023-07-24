@@ -20,8 +20,17 @@ select_pins = [Pin(i, Pin.OUT) for i in select_pin_nums]
 z_mux_1 = ADC(Pin(27))    # Z1~GP27
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
-WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
+WBA_pin = Pin(1, mode=Pin.IN, pull=Pin.PULL_UP)
 
+thumbPin = Pin(5, Pin.OUT)
+indexPin = Pin(6, Pin.OUT)
+middlePin = Pin(7, Pin.OUT)
+ringPin = Pin(8, Pin.OUT)
+pinkyPin = Pin(9, Pin.OUT)
+
+led = Pin("LED", Pin.OUT)
+
+# NOTE: This SSID and password should be changed based on the network being used
 ssid = "wicip"
 password = "wicipwifi"
 
@@ -33,10 +42,11 @@ def connect():
     wlan.active(True)
     wlan.connect(ssid, password)
     while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        sleep(1)
+        led.toggle()
+        sleep(1e-2)
     ip = wlan.ifconfig()[0]
     print(f'Connected on {ip}')
+    led.on()
     return ip
 
 def open_socket(ip):
@@ -78,8 +88,6 @@ def serve(sock, glove):
 
 class Glove():
     def __init__(self):
-        self.get_relationships()
-
         self.mcp_joints = {
             "calibration": { "thumb": [0, 1e6, 0, 0], "index": [0, 1e6, 0, 0], "middle": [0, 1e6, 0, 0], "ring": [0, 1e6, 0, 0], "pinky": [0, 1e6, 0, 0] },
             "raw": { "thumb": [], "index": [], "middle": [], "ring": [], "pinky": [] }, 
@@ -94,6 +102,10 @@ class Glove():
             "current_avg": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 },
             "angle": { "thumb": 0, "index": 0, "middle": 0, "ring": 0, "pinky": 0 }
         }
+
+        self.relationships = {}
+
+        self.get_relationships()
     
     def select_pin(self, p, pins): 
         for i in range(3): 
@@ -199,9 +211,7 @@ class Glove():
 
             self.pip_joints["raw"][finger] = []
 
-        # ex) { "index_mcp": [m, b], "index_pip_0": [m, b], "index_pip_90": [m, b] } 
         self.write_to_relationships()
-        self.get_relationships()
         print("Calibration complete")
 
     def send_data_to_VR(self, client_socket):
@@ -274,28 +284,27 @@ class Glove():
         return max(low, min(value, high))
     
     def get_relationships(self):
-        with open('./relationships.json') as f:
-            file_data = f.read()
-        self.relationships = json.loads(file_data)
-        f.close()
+        try:
+            with open('./relationships.json') as f:
+                file_data = f.read()
+                self.relationships = json.loads(file_data)
+        except OSError:
+            with open('./relationships.json', 'w+') as f:
+                self.set_relationships()
+                f.write(json.dumps(self.relationships))
 
     def write_to_relationships(self):
-        with open('./relationships.json') as f:
-            file_data = f.read()
-        f.close()
-        
-        self.relationships = json.loads(file_data)
+        self.set_relationships()
+        with open('relationships.json', 'w') as f:
+            f.write(json.dumps(self.relationships))
 
+    def set_relationships(self):
         # ex) { "index_mcp": [m, b], "index_pip_0": [m, b], "index_pip_90": [m, b] }
         for finger in fingers:
             self.relationships[finger + "_mcp"] = [self.mcp_joints["calibration"][finger][2], self.mcp_joints["calibration"][finger][3]]
             self.relationships[finger + "_pip_0"] = [self.pip_joints["calibration_0"][finger][2], self.pip_joints["calibration_0"][finger][3]]
             self.relationships[finger + "_pip_90"] = [self.pip_joints["calibration_90"][finger][2], self.pip_joints["calibration_90"][finger][3]] 
 
-        with open('relationships.json', 'w') as relationship_file:
-            relationship_file.write(json.dumps(self.relationships))
-        
-        relationship_file.close()
 
 if __name__ == '__main__':
     try:
