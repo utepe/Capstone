@@ -219,7 +219,7 @@ class Glove():
         data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
         client_socket.send(data_to_send.encode('utf-8'))
         # TODO: remove this 10ms sleep and test again
-        sleep_ms(10)
+        sleep_ms(5)
     
     # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
