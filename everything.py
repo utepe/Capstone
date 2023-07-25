@@ -47,7 +47,7 @@ def connect():
     wlan.connect(ssid, password)
     while wlan.isconnected() == False:
         led.toggle()
-        sleep(1e-2)
+        sleep(1e-1)
     ip = wlan.ifconfig()[0]
     print(f'Connected on {ip}')
     led.on()
