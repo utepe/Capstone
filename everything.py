@@ -56,31 +56,31 @@ def serve(sock, glove):
     print('Connected to client:', client_address)
     while True:
         try:
-            # Wait for data from the client socket or raise an exception if no data is received
+            # Wait for data from the client socket, if no data is received continue with currentMode
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.01)
+
+            if ready_to_read:
+                unityData = client_socket.recv(1024).decode("utf-8")
+                print(unityData)
+                if unityData == "calibration":  # CALIBRATION mode
+                    currentMode = Mode[1]
+                elif unityData == "unityMode":  # UNITY mode
+                    currentMode = Mode[2]
+                elif unityData == "WBAMode":
+                    currentMode = Mode[3]
+                else:  # remain in IDLE mode
+                    currentMode = Mode[0]
 
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
             elif currentMode == "UNITY":
-                if ready_to_read:
-                    unityData = client_socket.recv(1024).decode("utf-8")
-                    if unityData == "stopSending":
-                        currentMode = Mode[0]
-                else:
-                    glove.send_data_to_VR(client_socket)
+                glove.send_data_to_VR(client_socket)
             elif currentMode == "WBA":
                 glove.send_data_to_WBA()
             else:  # IDLE mode
-                if ready_to_read:
-                    unityData = client_socket.recv(1024).decode("utf-8")
-                    if unityData == "calibration":  # CALIBRATION mode
-                        currentMode = Mode[1]
-                    elif unityData == "unityMode":  # UNITY mode
-                        currentMode = Mode[2]
-                    else:  # remain in IDLE mode
-                        currentMode = Mode[0]
-
+                pass
+                
         except OSError as e:
             print("OS Error occurred while serving: ", e)
             pass
@@ -223,7 +223,7 @@ class Glove():
     
     # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
-        pass
+        print("Sending Data to WBA mode...", end="\r")
 
     def update_angles(self):
         for finger in fingers:
