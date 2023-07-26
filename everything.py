@@ -84,7 +84,6 @@ def serve(sock, glove):
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
-
             elif currentMode == "UNITY":
                 glove.send_data_to_VR(client_socket)
             elif currentMode == "WBA":
@@ -305,7 +304,7 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
-    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
+    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b
