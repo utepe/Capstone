@@ -263,7 +263,7 @@ class Glove():
 
         # print(f"Index Finger Angle WBA: {index_angle}", end="\r")
         
-        sleep_ms(5)
+        sleep_ms(2)
 
         thumbDutyCycle = int((6000*thumb_angle/180)+2000)
         indexDutyCycle = int((6000*index_angle/180)+2000)
@@ -364,4 +364,4 @@ if __name__ == '__main__':
         glove = Glove()
         serve(sock, glove)
     except KeyboardInterrupt:
-        pass
+        reset()
