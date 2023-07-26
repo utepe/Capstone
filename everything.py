@@ -1,6 +1,6 @@
 import uselect as select
 import json
-from machine import Pin, ADC, reset
+from machine import Pin, ADC, PWM, reset
 from time import sleep, sleep_ms
 from utime import time_ns
 import network
@@ -13,7 +13,6 @@ fingers = ("thumb", "index", "middle", "ring", "pinky")
 
 sampling_time = 1000 # in nanoseconds
 
-'''Can use same select pins for both muxes, can remove select_pins_mux_2 and select_pin_nums_mux_2'''
 select_pin_nums = [22, 21, 20]    # S0~GP22, S1~GP21, S2~GP20
 
 select_pins = [Pin(i, Pin.OUT) for i in select_pin_nums]
@@ -21,12 +20,25 @@ select_pins = [Pin(i, Pin.OUT) for i in select_pin_nums]
 z_mux_1 = ADC(Pin(27))    # Z1~GP27
 z_mux_2 = ADC(Pin(26))    # Z2~GP26
 
-WBA_pin = Pin(14, mode=Pin.IN, pull=Pin.PULL_UP)
+WBA_pin = Pin(1, mode=Pin.IN, pull=Pin.PULL_UP)
+
+thumbPWM = PWM(Pin(5))
+indexPWM = PWM(Pin(6))
+middlePWM = PWM(Pin(7))
+ringPWM = PWM(Pin(8))
+pinkyPWM = PWM(Pin(9))
+
+thumbPWM.freq(50)
+indexPWM.freq(50)
+middlePWM.freq(50)
+ringPWM.freq(50)
+pinkyPWM.freq(50)
+
 led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
-ssid = "Truva"
-password = "bizimevimiz"
+ssid = "STEVEN_OFFICE"
+password = "094ADADEA"
 
 def connect():
     #Connect to WLAN
@@ -72,6 +84,7 @@ def serve(sock, glove):
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
+
             elif currentMode == "UNITY":
                 glove.send_data_to_VR(client_socket)
             elif currentMode == "WBA":
@@ -81,7 +94,8 @@ def serve(sock, glove):
                 
         except OSError as e:
             print("OS Error occurred while serving: ", e)
-            pass
+            sock.close()
+            break
 
 class Glove():
     def __init__(self):
@@ -218,9 +232,29 @@ class Glove():
         client_socket.send(data_to_send.encode('utf-8'))
         sleep_ms(5)
     
-    # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
-        print("Sending Data to WBA mode...", end="\r")
+        self.read_sensors()
+        self.update_angles()
+        WBA_mcp_angle_ratio = 0.35
+        thumb_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["thumb"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["thumb"])
+        index_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["index"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["index"])
+        middle_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["middle"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["middle"])
+        ring_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["ring"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["ring"])
+        pinky_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["pinky"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["pinky"])
+
+        sleep_ms(2)
+
+        thumbDutyCycle = int((6000*thumb_angle/180)+2000)
+        indexDutyCycle = int((6000*index_angle/180)+2000)
+        middleDutyCycle = int((6000*middle_angle/180)+2000)
+        ringDutyCycle = int((6000*(180-ring_angle)/180)+2000)
+        pinkyDutyCycle = int((6000*(180-pinky_angle)/180)+2000)
+
+        thumbPWM.duty_u16(thumbDutyCycle)
+        indexPWM.duty_u16(indexDutyCycle)
+        middlePWM.duty_u16(middleDutyCycle)
+        ringPWM.duty_u16(ringDutyCycle)
+        pinkyPWM.duty_u16(pinkyDutyCycle)
 
     def update_angles(self):
         for finger in fingers:
@@ -271,7 +305,7 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
-    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
+    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b

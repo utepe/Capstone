@@ -1,41 +1,23 @@
 from machine import Pin, PWM
 import time
 
-mcp = PWM(Pin(0))
-pip = PWM(Pin(1))
-mcp.freq(50)
-pip.freq(50)
+thumb = PWM(Pin(5))
+index = PWM(Pin(6))
+middle = PWM(Pin(7))
+ring = PWM(Pin(8))
+pinky = PWM(Pin(9))
 
-print("Waiting for 1 second")
-time.sleep(1)
-mcpDutyCycle = 5000 # adjusted 0 degrees (90 on the servo)
-pipDutyCycle = 5000 # adjusted 0 degrees (90 on the servo)
-mcp.duty_u16(mcpDutyCycle)
-pip.duty_u16(pipDutyCycle)
-mcpAngle = 0
-pipAngle = 0
+thumb.freq(50)
+index.freq(50)
+middle.freq(50)
+ring.freq(50)
+pinky.freq(50)
 
-'''try:
-    while True:
-        new_pipAngle = input("Enter angle: ")
-        if new_pipAngle == "q":
-            mcp.stop()
-            pip.stop()
-            GPIO.cleanup()
-            break
-        elif new_pipAngle == 'h': # Hold position
-            mcpDutyCycle = 0
-            pipDutyCycle = 0
-        else:
-            new_pipAngle = float(new_pipAngle)
-            pipAngle = new_pipAngle
-            pipDutyCycle = (pipAngle/22.5)+2
-        mcp.ChangeDutyCycle(pipDutyCycle)
-        pip.ChangeDutyCycle(pipDutyCycle)
-
-except KeyboardInterrupt:
-    mcp.stop()
-    GPIO.cleanup()'''
+thumbAngle = 0
+indexAngle = 0
+middleAngle = 0
+ringAngle = 0
+pinkyAngle = 0
 
 try:
     while True:
@@ -43,31 +25,23 @@ try:
         if angle == "q":
             break
         elif angle == 'h': # Hold position
-            mcpDutyCycle = 0
-            pipDutyCycle = 0
+            thumbDutyCycle = 0
+            indexDutyCycle = 0
+            middleDutyCycle = 0
+            ringDutyCycle = 0
+            pinkyDutyCycle = 0
         else:
-            if 'mp' in angle:
-                mcpAngle = float(angle.split('mp')[1].split(' ')[0])
-                mcpDutyCycle = int((6000*mcpAngle/180)+2000)
-
-                pipAngle = float(angle.split('mp')[1].split(' ')[1])
-                pipDutyCycle = int((6000*pipAngle/180)+2000)
-            elif 'm' in angle:
-                mcpAngle = float(angle.split('m')[1])
-                mcpDutyCycle = int((6000*mcpAngle/180)+2000)
-                
-            elif 'p' in angle:
-                pipAngle = float(angle.split('p')[1])
-                pipDutyCycle = int((6000*pipAngle/180)+2000)
-            else:
-                new_mcpAngle = float(angle)
-                pipAngle += (new_mcpAngle - mcpAngle) / 2
-                mcpAngle = new_mcpAngle
-                mcpDutyCycle = int((6000*mcpAngle/180)+2000)
-                pipDutyCycle = int((6000*pipAngle/180)+2000)
-        mcp.duty_u16(mcpDutyCycle)
-        pip.duty_u16(pipDutyCycle)
-        print("MCP: " + str(mcpAngle) + " | PIP: " + str(pipAngle))
+            angle = float(angle)
+            thumbDutyCycle = int((6000*angle/180)+2000)
+            indexDutyCycle = int((6000*angle/180)+2000)
+            middleDutyCycle = int((6000*angle/180)+2000)
+            ringDutyCycle = int((6000*(180-angle)/180)+2000)
+            pinkyDutyCycle = int((6000*(180-angle)/180)+2000)
+        thumb.duty_u16(thumbDutyCycle)
+        index.duty_u16(indexDutyCycle)
+        middle.duty_u16(middleDutyCycle)
+        ring.duty_u16(ringDutyCycle)
+        pinky.duty_u16(pinkyDutyCycle)
 
 except KeyboardInterrupt:
     print("Interrupted")
