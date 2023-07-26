@@ -48,8 +48,6 @@ def open_socket(ip):
     sock.listen()
     return sock
 
-# first check if the glove is connected to WBA to enter that mode
-# If the glove is not in WBA mode then accept the socket and handle the socket requests 
 def serve(sock, glove):
     currentMode = Mode[0]
     client_socket, client_address = sock.accept()
