@@ -36,66 +36,6 @@ pinkyPWM.freq(50)
 
 led = Pin("LED", Pin.OUT)
 
-# NOTE: This SSID and password should be changed based on the network being used
-ssid = "STEVEN_OFFICE"
-password = "094ADADEA"
-
-def connect():
-    #Connect to WLAN
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-    while wlan.isconnected() == False:
-        led.toggle()
-        sleep(1e-1)
-    ip = wlan.ifconfig()[0]
-    print(f'Connected on {ip}')
-    led.on()
-    return ip
-
-def open_socket(ip):
-    address = (ip, 80)
-    sock = socket.socket()
-    sock.bind(address)
-    sock.listen()
-    return sock
-
-def serve(sock, glove):
-    currentMode = Mode[0]
-    client_socket, client_address = sock.accept()
-    print('Connected to client:', client_address)
-    while True:
-        try:
-            # Wait for data from the client socket, if no data is received continue with currentMode
-            ready_to_read, _, _ = select.select([client_socket], [], [], 0.01)
-
-            if ready_to_read:
-                unityData = client_socket.recv(1024).decode("utf-8")
-                print(unityData)
-                if unityData == "calibration":  # CALIBRATION mode
-                    currentMode = Mode[1]
-                elif unityData == "unityMode":  # UNITY mode
-                    currentMode = Mode[2]
-                elif unityData == "WBAMode":
-                    currentMode = Mode[3]
-                else:  # remain in IDLE mode
-                    currentMode = Mode[0]
-
-            if currentMode == "CALIBRATION":
-                glove.calibrate(client_socket)
-                currentMode = Mode[0]
-            elif currentMode == "UNITY":
-                glove.send_data_to_VR(client_socket)
-            elif currentMode == "WBA":
-                glove.send_data_to_WBA()
-            else:  # IDLE mode
-                pass
-                
-        except OSError as e:
-            print("OS Error occurred while serving: ", e)
-            sock.close()
-            break
-
 class Glove():
     def __init__(self):
         self.mcp_joints = {
@@ -336,10 +276,8 @@ class Glove():
 
 
 if __name__ == '__main__':
-    try:
-        ip = connect()
-        sock = open_socket(ip)
-        glove = Glove()
-        serve(sock, glove)
-    except KeyboardInterrupt:
-        reset()
+    glove = Glove()
+
+    while True:
+        glove.read_sensors()
+        print(glove.pip_joints["current_avg"], end='\r')
