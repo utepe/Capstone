@@ -60,55 +60,37 @@ def open_socket(ip):
     sock.listen()
     return sock
 
-# first check if the glove is connected to WBA to enter that mode
-# If the glove is not in WBA mode then accept the socket and handle the socket requests 
 def serve(sock, glove):
     currentMode = Mode[0]
     client_socket, client_address = sock.accept()
     print('Connected to client:', client_address)
     while True:
         try:
-            # Wait for data from the client socket or raise an exception if no data is received
+            # Wait for data from the client socket, if no data is received continue with currentMode
             ready_to_read, _, _ = select.select([client_socket], [], [], 0.01)
+
+            if ready_to_read:
+                unityData = client_socket.recv(1024).decode("utf-8")
+                print(unityData)
+                if unityData == "calibration":  # CALIBRATION mode
+                    currentMode = Mode[1]
+                elif unityData == "unityMode":  # UNITY mode
+                    currentMode = Mode[2]
+                elif unityData == "WBAMode":
+                    currentMode = Mode[3]
+                else:  # remain in IDLE mode
+                    currentMode = Mode[0]
 
             if currentMode == "CALIBRATION":
                 glove.calibrate(client_socket)
                 currentMode = Mode[0]
-
             elif currentMode == "UNITY":
-                if ready_to_read:
-                    unityData = client_socket.recv(1024).decode("utf-8")
-                    if unityData == "stopSending":
-                        currentMode = Mode[0]
-                else:
-                    glove.send_data_to_VR(client_socket)
-
+                glove.send_data_to_VR(client_socket)
             elif currentMode == "WBA":
-                if ready_to_read:
-                    unityData = client_socket.recv(1024).decode("utf-8")
-                    if unityData == "stopSending":
-                        currentMode = Mode[0]
-                else:
-                    glove.send_data_to_WBA()
-
+                glove.send_data_to_WBA()
             else:  # IDLE mode
-                if ready_to_read:
-                    try:
-                        unityData = client_socket.recv(1024).decode("utf-8")
-                        if unityData == "calibration":  # CALIBRATION mode
-                            currentMode = Mode[1]
-                        elif unityData == "unityMode":  # UNITY mode
-                            currentMode = Mode[2]
-                        elif unityData == "WBAMode":
-                            currentMode = Mode[3]
-                        else:  # remain in IDLE mode
-                            currentMode = Mode[0]
-                    except OSError as e:
-                        print("OS Error occurred in IDLE: ", e)
-                        sock.close()
-                        break
-
-
+                pass
+                
         except OSError as e:
             print("OS Error occurred while serving: ", e)
             sock.close()
@@ -247,10 +229,8 @@ class Glove():
         self.update_angles()
         data_to_send = str(self.mcp_joints["angle"]["thumb"]) + ", " + str(self.pip_joints["angle"]["thumb"]) + ", " + str(self.mcp_joints["angle"]["index"]) + ", " + str(self.pip_joints["angle"]["index"]) + ", " + str(self.mcp_joints["angle"]["middle"]) + ", " + str(self.pip_joints["angle"]["middle"]) + ", " + str(self.mcp_joints["angle"]["ring"]) + ", " + str(self.pip_joints["angle"]["ring"]) + ", " + str(self.mcp_joints["angle"]["pinky"]) + ", " + str(self.pip_joints["angle"]["pinky"]) + " \n"
         client_socket.send(data_to_send.encode('utf-8'))
-        # TODO: remove this 10ms sleep and test again
-        sleep_ms(10)
+        sleep_ms(5)
     
-    # TODO: update this once Stevo is done
     def send_data_to_WBA(self):
         self.read_sensors()
         self.update_angles()
@@ -261,8 +241,6 @@ class Glove():
         ring_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["ring"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["ring"])
         pinky_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["pinky"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["pinky"])
 
-        # print(f"Index Finger Angle WBA: {index_angle}", end="\r")
-        
         sleep_ms(2)
 
         thumbDutyCycle = int((6000*thumb_angle/180)+2000)
@@ -326,7 +304,7 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
-    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
+    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b
