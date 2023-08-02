@@ -37,8 +37,10 @@ pinkyPWM.freq(50)
 led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
-ssid = "STEVEN_OFFICE"
-password = "094ADADEA"
+# ssid = "STEVEN_OFFICE"
+# password = "094ADADEA"
+ssid = "wicip"
+password = "wicipwifi"
 
 def connect():
     #Connect to WLAN
@@ -71,6 +73,13 @@ def serve(sock, glove):
 
             if ready_to_read:
                 unityData = client_socket.recv(1024).decode("utf-8")
+                if currentMode == Mode[3]:
+                    thumbPWM.duty_u16(0)
+                    indexPWM.duty_u16(0)
+                    middlePWM.duty_u16(0)
+                    ringPWM.duty_u16(0)
+                    pinkyPWM.duty_u16(0)
+                    
                 print(unityData)
                 if unityData == "calibration":  # CALIBRATION mode
                     currentMode = Mode[1]
@@ -93,8 +102,7 @@ def serve(sock, glove):
                 
         except OSError as e:
             print("OS Error occurred while serving: ", e)
-            sock.close()
-            break
+            input()
 
 class Glove():
     def __init__(self):
@@ -241,6 +249,8 @@ class Glove():
         ring_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["ring"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["ring"])
         pinky_angle = 2*(WBA_mcp_angle_ratio*self.mcp_joints["angle"]["pinky"] + (1-WBA_mcp_angle_ratio)*self.pip_joints["angle"]["pinky"])
 
+        ring_angle = self.bound(ring_angle, 10, 180)
+
         sleep_ms(2)
 
         thumbDutyCycle = int((6000*thumb_angle/180)+2000)
@@ -304,7 +314,7 @@ class Glove():
     def linear_func(self, x, a, b):
         return a * x + b
 
-    def linear_fit(self, x1, x2, y1 = 90, y2 = 0):
+    def linear_fit(self, x1, x2, y1 = 0, y2 = 90):
         m = (y2 - y1) / (x2 - x1)
         b = y1 - m * x1
         return m, b
