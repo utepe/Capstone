@@ -37,8 +37,6 @@ pinkyPWM.freq(50)
 led = Pin("LED", Pin.OUT)
 
 # NOTE: This SSID and password should be changed based on the network being used
-# ssid = "STEVEN_OFFICE"
-# password = "094ADADEA"
 ssid = "wicip"
 password = "wicipwifi"
 
